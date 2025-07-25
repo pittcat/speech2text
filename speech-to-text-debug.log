@@ -1,0 +1,176 @@
+[2025-07-25T17:33:56.874Z] [INFO] [1753464836873-6znndkbcp] [================================================================================] undefined
+[2025-07-25T17:33:56.874Z] [INFO] [1753464836873-6znndkbcp] [Speech to Text Plugin Started - Session: 1753464836873-6znndkbcp] undefined
+[2025-07-25T17:33:56.874Z] [INFO] [1753464836873-6znndkbcp] [Environment: Development] undefined
+[2025-07-25T17:33:56.874Z] [INFO] [1753464836873-6znndkbcp] [Log File: /Users/pittcat/Dev/Python/voice2text/speech-to-text/speech-to-text-debug.log] undefined
+[2025-07-25T17:33:56.874Z] [INFO] [1753464836873-6znndkbcp] [================================================================================] undefined
+[2025-07-25T17:33:56.923Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Component initialized | {"preferences":{"aiProvider":"doubao","language":"zh","enableContext":true,"saveAudioFiles":true,"promptText":"Maintain proper sentence structure, punctuation, and paragraphs. Format numbers, currency, and units appropriately. Preserve speaker transitions if multiple speakers are detected.","doubaoAppKey":"2099456436","doubaoAccessToken":"Y4muRvrXyAZuqQODGCidZ1mZCxVqQ2sn","doubaoSecretKey":"AH7V1Ekewr4OJTWIkFXJZDFAoY4lZIe5","model":"whisper-large-v3"},"aiProvider":"doubao","logFile":"/Users/pittcat/Dev/Python/voice2text/speech-to-text/speech-to-text-debug.log"}
+[2025-07-25T17:33:56.924Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Attempting to read clipboard for context
+[2025-07-25T17:33:56.924Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: recorderState.isRecording changed | {"isRecording":false,"duration":0,"timestamp":1753464836924}
+[2025-07-25T17:33:56.924Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Component initialized | {"preferences":{"aiProvider":"doubao","language":"zh","enableContext":true,"saveAudioFiles":true,"promptText":"Maintain proper sentence structure, punctuation, and paragraphs. Format numbers, currency, and units appropriately. Preserve speaker transitions if multiple speakers are detected.","doubaoAppKey":"2099456436","doubaoAccessToken":"Y4muRvrXyAZuqQODGCidZ1mZCxVqQ2sn","doubaoSecretKey":"AH7V1Ekewr4OJTWIkFXJZDFAoY4lZIe5","model":"whisper-large-v3"},"aiProvider":"doubao","logFile":"/Users/pittcat/Dev/Python/voice2text/speech-to-text/speech-to-text-debug.log"}
+[2025-07-25T17:33:56.924Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Attempting to read clipboard for context
+[2025-07-25T17:33:56.925Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: recorderState.isRecording changed | {"isRecording":false,"duration":0,"timestamp":1753464836925}
+[2025-07-25T17:33:56.953Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] Clipboard text retrieved | {"textLength":7,"preview":"Context..."}
+[2025-07-25T17:33:56.953Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] Clipboard text retrieved | {"textLength":7,"preview":"Context..."}
+[2025-07-25T17:33:57.195Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] handleRecordAndTranscribe called | {"isRecording":false,"isProcessing":false,"isTranscribing":false}
+[2025-07-25T17:33:57.195Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: handleRecordAndTranscribe called | {"isRecording":false,"isProcessing":false,"isTranscribing":false,"recorderState":{"isRecording":false,"isPaused":false,"duration":0}}
+[2025-07-25T17:33:57.196Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Starting operation: handleRecordAndTranscribe
+[2025-07-25T17:33:57.196Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: Before state check | {"recorderState.isRecording":false,"will choose branch":"START"}
+[2025-07-25T17:33:57.196Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: Recorder is NOT recording, will START recording
+[2025-07-25T17:33:57.196Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Starting recording...
+[2025-07-25T17:33:57.196Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: About to call startRecording()
+[2025-07-25T17:33:57.197Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: startRecording() called
+[2025-07-25T17:33:57.197Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: Generated audio file path | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}
+[2025-07-25T17:33:57.197Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: State updated to isRecording=true
+[2025-07-25T17:33:57.197Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] Sox command | {"command":"/opt/homebrew/bin/sox -q -t coreaudio default -b 16 -c 1 -r 16000 -e signed-integer -t wav \"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav\""}
+[2025-07-25T17:33:57.199Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] Sox process started | {"pid":23737}
+[2025-07-25T17:33:57.211Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: State should be updated now, checking...
+[2025-07-25T17:33:57.211Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: startRecording() completed successfully | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}
+[2025-07-25T17:33:57.211Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: startRecording() completed, new state should be recording=true
+[2025-07-25T17:33:57.211Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Completed operation: handleRecordAndTranscribe | {"duration":"15ms"}
+[2025-07-25T17:33:57.211Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: recorderState.isRecording changed | {"isRecording":true,"duration":0,"timestamp":1753464837211}
+[2025-07-25T17:34:02.170Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] handleRecordAndTranscribe called | {"isRecording":true,"isProcessing":false,"isTranscribing":false}
+[2025-07-25T17:34:02.170Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: handleRecordAndTranscribe called | {"isRecording":true,"isProcessing":false,"isTranscribing":false,"recorderState":{"isRecording":true,"isPaused":false,"duration":4,"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}}
+[2025-07-25T17:34:02.171Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Starting operation: handleRecordAndTranscribe
+[2025-07-25T17:34:02.171Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: Before state check | {"recorderState.isRecording":true,"will choose branch":"STOP"}
+[2025-07-25T17:34:02.171Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: Recorder is recording, will STOP recording
+[2025-07-25T17:34:02.171Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Stopping recording...
+[2025-07-25T17:34:02.271Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: About to call stopRecording()
+[2025-07-25T17:34:02.272Z] [DEBUG] [1753464836873-6znndkbcp] [AudioRecorder] 🐛 DEBUG: stopRecording() called | {"isRecording":true,"processExists":true}
+[2025-07-25T17:34:02.276Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: recorderState.isRecording changed | {"isRecording":false,"duration":5,"timestamp":1753464842276}
+[2025-07-25T17:34:02.277Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] 🐛 DEBUG: stopRecording() returned | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}
+[2025-07-25T17:34:02.277Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Audio file saved | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}
+[2025-07-25T17:34:02.278Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] Audio format verification | {"bitDepth":16,"sampleRate":16000,"channels":1,"duration":67108.736,"size":155648}
+[2025-07-25T17:34:02.279Z] [DEBUG] [1753464836873-6znndkbcp] [RecordTranscription] Starting transcription | {"provider":"doubao","language":"zh","promptLength":196}
+[2025-07-25T17:34:02.279Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Starting operation: transcribeAudio
+[2025-07-25T17:34:02.279Z] [INFO] [1753464836873-6znndkbcp] [Transcription] Starting transcription | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav","provider":"doubao","language":"zh"}
+[2025-07-25T17:34:02.279Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Audio info | {"duration":67108.736,"size":155648,"sampleRate":16000,"channels":1,"bitDepth":16}
+[2025-07-25T17:34:02.280Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Starting operation: transcribeWithDoubao
+[2025-07-25T17:34:02.315Z] [INFO] [1753464836873-6znndkbcp] [DoubaoClient] Connecting to Doubao WebSocket | {"url":"wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async","requestId":"eb733257-d769-4818-a3fb-d02e86cef454","appId":"2099****"}
+[2025-07-25T17:34:02.442Z] [INFO] [1753464836873-6znndkbcp] [DoubaoClient] WebSocket connection established
+[2025-07-25T17:34:02.443Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Sending config to Doubao
+[2025-07-25T17:34:02.443Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Sending config | {"user":{"uid":"demo_uid"},"audio":{"format":"pcm","codec":"raw","rate":16000,"bits":16,"channel":1},"request":{"model_name":"bigmodel","enable_itn":true,"enable_punc":true,"enable_ddc":true,"show_utterances":true,"enable_nonstream":false}}
+[2025-07-25T17:34:02.445Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11111100","seq":1,"payloadSize":176,"totalSize":188,"first20Bytes":"1111110000000001000000b01f8b080000000000"}
+[2025-07-25T17:34:02.445Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending config message | {"seq":1,"messageSize":188}
+[2025-07-25T17:34:02.446Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Config sent, proceeding without waiting for response
+[2025-07-25T17:34:02.449Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Reading audio file | {"audioFilePath":"/Users/pittcat/Library/Application Support/com.raycast.macos/extensions/speech-to-text/audio/recording-2025-07-25T17-33-57-197Z.wav"}
+[2025-07-25T17:34:02.449Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] PCM data extracted | {"wavSize":158124,"pcmSize":158080}
+[2025-07-25T17:34:02.450Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] About to send audio data
+[2025-07-25T17:34:02.450Z] [INFO] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio file | {"totalSize":158080,"segmentSize":6400,"segmentCount":25,"duration":"4.94s"}
+[2025-07-25T17:34:02.450Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":2}
+[2025-07-25T17:34:02.452Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":2,"payloadSize":3285,"totalSize":3297,"first20Bytes":"112101000000000200000cd51f8b080000000000"}
+[2025-07-25T17:34:02.492Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":80}
+[2025-07-25T17:34:02.493Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":80,"first10Bytes":"11901000000000487b22","header":{"byte0":"0x11","byte1":"0x90","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:02.493Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x0","serialization":1,"compression":0}
+[2025-07-25T17:34:02.493Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":3}
+[2025-07-25T17:34:02.654Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":3}
+[2025-07-25T17:34:02.657Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":3,"payloadSize":3642,"totalSize":3654,"first20Bytes":"112101000000000300000e3a1f8b080000000000"}
+[2025-07-25T17:34:02.862Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":4}
+[2025-07-25T17:34:02.864Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":4,"payloadSize":2556,"totalSize":2568,"first20Bytes":"1121010000000004000009fc1f8b080000000000"}
+[2025-07-25T17:34:03.067Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":5}
+[2025-07-25T17:34:03.070Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":5,"payloadSize":2001,"totalSize":2013,"first20Bytes":"1121010000000005000007d11f8b080000000000"}
+[2025-07-25T17:34:03.273Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":6}
+[2025-07-25T17:34:03.278Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":6,"payloadSize":2940,"totalSize":2952,"first20Bytes":"112101000000000600000b7c1f8b080000000000"}
+[2025-07-25T17:34:03.480Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":7}
+[2025-07-25T17:34:03.483Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":7,"payloadSize":2404,"totalSize":2416,"first20Bytes":"1121010000000007000009641f8b080000000000"}
+[2025-07-25T17:34:03.687Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":8}
+[2025-07-25T17:34:03.692Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":8,"payloadSize":3930,"totalSize":3942,"first20Bytes":"112101000000000800000f5a1f8b080000000000"}
+[2025-07-25T17:34:03.895Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":9}
+[2025-07-25T17:34:03.900Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":9,"payloadSize":5767,"totalSize":5779,"first20Bytes":"1121010000000009000016871f8b080000000000"}
+[2025-07-25T17:34:04.103Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":10}
+[2025-07-25T17:34:04.106Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":10,"payloadSize":5825,"totalSize":5837,"first20Bytes":"112101000000000a000016c11f8b080000000000"}
+[2025-07-25T17:34:04.309Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":11}
+[2025-07-25T17:34:04.312Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":11,"payloadSize":5143,"totalSize":5155,"first20Bytes":"112101000000000b000014171f8b080000000000"}
+[2025-07-25T17:34:04.515Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":12}
+[2025-07-25T17:34:04.519Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":12,"payloadSize":5758,"totalSize":5770,"first20Bytes":"112101000000000c0000167e1f8b080000000000"}
+[2025-07-25T17:34:04.561Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":277}
+[2025-07-25T17:34:04.561Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":277,"first10Bytes":"11911000000000010000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:04.562Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:04.562Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":13}
+[2025-07-25T17:34:04.562Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何","isLast":false}
+[2025-07-25T17:34:04.563Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何","length":2}
+[2025-07-25T17:34:04.722Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":13}
+[2025-07-25T17:34:04.729Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":13,"payloadSize":5585,"totalSize":5597,"first20Bytes":"112101000000000d000015d11f8b080000000000"}
+[2025-07-25T17:34:04.930Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":14}
+[2025-07-25T17:34:04.934Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":14,"payloadSize":6068,"totalSize":6080,"first20Bytes":"112101000000000e000017b41f8b080000000000"}
+[2025-07-25T17:34:04.969Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":341}
+[2025-07-25T17:34:04.970Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":341,"first10Bytes":"11911000000000020000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:04.970Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:04.971Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":15}
+[2025-07-25T17:34:04.971Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用","isLast":false}
+[2025-07-25T17:34:04.971Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用","length":4}
+[2025-07-25T17:34:05.139Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":15}
+[2025-07-25T17:34:05.141Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":15,"payloadSize":4585,"totalSize":4597,"first20Bytes":"112101000000000f000011e91f8b080000000000"}
+[2025-07-25T17:34:05.344Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":16}
+[2025-07-25T17:34:05.347Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":16,"payloadSize":5048,"totalSize":5060,"first20Bytes":"1121010000000010000013b81f8b080000000000"}
+[2025-07-25T17:34:05.548Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":17}
+[2025-07-25T17:34:05.552Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":17,"payloadSize":4873,"totalSize":4885,"first20Bytes":"1121010000000011000013091f8b080000000000"}
+[2025-07-25T17:34:05.755Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":18}
+[2025-07-25T17:34:05.757Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":18,"payloadSize":5421,"totalSize":5433,"first20Bytes":"11210100000000120000152d1f8b080000000000"}
+[2025-07-25T17:34:05.958Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":19}
+[2025-07-25T17:34:05.960Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":19,"payloadSize":5444,"totalSize":5456,"first20Bytes":"1121010000000013000015441f8b080000000000"}
+[2025-07-25T17:34:06.000Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":444}
+[2025-07-25T17:34:06.002Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":444,"first10Bytes":"11911000000000030000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:06.002Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:06.004Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":20}
+[2025-07-25T17:34:06.004Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust","isLast":false}
+[2025-07-25T17:34:06.004Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust","length":9}
+[2025-07-25T17:34:06.162Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":20}
+[2025-07-25T17:34:06.163Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":20,"payloadSize":5088,"totalSize":5100,"first20Bytes":"1121010000000014000013e01f8b080000000000"}
+[2025-07-25T17:34:06.204Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":553}
+[2025-07-25T17:34:06.205Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":553,"first10Bytes":"11911000000000040000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:06.205Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:06.206Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":21}
+[2025-07-25T17:34:06.206Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建","isLast":false}
+[2025-07-25T17:34:06.206Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建","length":12}
+[2025-07-25T17:34:06.365Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":21}
+[2025-07-25T17:34:06.371Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":21,"payloadSize":5626,"totalSize":5638,"first20Bytes":"1121010000000015000015fa1f8b080000000000"}
+[2025-07-25T17:34:06.573Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":22}
+[2025-07-25T17:34:06.574Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":22,"payloadSize":5840,"totalSize":5852,"first20Bytes":"1121010000000016000016d01f8b080000000000"}
+[2025-07-25T17:34:06.602Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":608}
+[2025-07-25T17:34:06.603Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":608,"first10Bytes":"11911000000000050000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:06.603Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:06.604Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":23}
+[2025-07-25T17:34:06.604Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建？1","isLast":false}
+[2025-07-25T17:34:06.604Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建？1","length":14}
+[2025-07-25T17:34:06.776Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":23}
+[2025-07-25T17:34:06.778Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":23,"payloadSize":5532,"totalSize":5544,"first20Bytes":"11210100000000170000159c1f8b080000000000"}
+[2025-07-25T17:34:06.980Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":24}
+[2025-07-25T17:34:06.983Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":24,"payloadSize":5490,"totalSize":5502,"first20Bytes":"1121010000000018000015721f8b080000000000"}
+[2025-07-25T17:34:07.007Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":663}
+[2025-07-25T17:34:07.008Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":663,"first10Bytes":"11911000000000060000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:07.009Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:07.009Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":25}
+[2025-07-25T17:34:07.009Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建一个","isLast":false}
+[2025-07-25T17:34:07.010Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建一个","length":14}
+[2025-07-25T17:34:07.185Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":6400,"isLast":false,"seq":25}
+[2025-07-25T17:34:07.187Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11210100","seq":25,"payloadSize":4992,"totalSize":5004,"first20Bytes":"1121010000000019000013801f8b080000000000"}
+[2025-07-25T17:34:07.221Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":763}
+[2025-07-25T17:34:07.222Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":763,"first10Bytes":"11911000000000070000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:07.223Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:07.223Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":26}
+[2025-07-25T17:34:07.223Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建一个 Web","isLast":false}
+[2025-07-25T17:34:07.224Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建一个 Web","length":18}
+[2025-07-25T17:34:07.388Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Sending audio chunk | {"size":4480,"isLast":true,"seq":-26}
+[2025-07-25T17:34:07.391Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📦 SEND: Building message | {"headerHex":"11230100","seq":-26,"payloadSize":1485,"totalSize":1497,"first20Bytes":"11230100ffffffe6000005cd1f8b080000000000"}
+[2025-07-25T17:34:07.392Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Audio data sent successfully
+[2025-07-25T17:34:07.393Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Waiting for final result
+[2025-07-25T17:34:07.627Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":872}
+[2025-07-25T17:34:07.628Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":872,"first10Bytes":"11911000000000080000","header":{"byte0":"0x11","byte1":"0x91","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:07.629Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x1","serialization":1,"compression":0}
+[2025-07-25T17:34:07.630Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":false,"hasPayload":true,"currentSeq":26}
+[2025-07-25T17:34:07.630Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建一个 Web 应用","isLast":false}
+[2025-07-25T17:34:07.630Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建一个 Web 应用","length":21}
+[2025-07-25T17:34:07.637Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] Received message | {"size":877}
+[2025-07-25T17:34:07.637Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 🔍 RAW: Received raw message | {"size":877,"first10Bytes":"11931000000000090000","header":{"byte0":"0x11","byte1":"0x93","byte2":"0x10","byte3":"0x00"}}
+[2025-07-25T17:34:07.638Z] [TRACE] [1753464836873-6znndkbcp] [DoubaoClient] 📥 PARSE: Header info | {"headerSize":1,"messageType":"0x9","flags":"0x3","serialization":1,"compression":0}
+[2025-07-25T17:34:07.641Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Parsed response | {"code":0,"event":0,"isLastPackage":true,"hasPayload":true,"currentSeq":26}
+[2025-07-25T17:34:07.641Z] [DEBUG] [1753464836873-6znndkbcp] [DoubaoClient] Transcription update (dict format) | {"text":"如何使用 rust 创建一个 Web 应用？","isLast":true}
+[2025-07-25T17:34:07.641Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Partial result | {"text":"如何使用 rust 创建一个 Web 应用？","length":22}
+[2025-07-25T17:34:07.641Z] [INFO] [1753464836873-6znndkbcp] [DoubaoClient] Final transcription result | {"text":"如何使用 rust 创建一个 Web 应用？","length":22}
+[2025-07-25T17:34:07.641Z] [DEBUG] [1753464836873-6znndkbcp] [Transcription] Final result received | {"textLength":22}
+[2025-07-25T17:34:07.645Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Completed operation: transcribeWithDoubao | {"duration":"5365ms"}
+[2025-07-25T17:34:07.645Z] [INFO] [1753464836873-6znndkbcp] [Transcription] Transcription completed | {"processingTime":"5.37s","resultLength":22}
+[2025-07-25T17:34:07.645Z] [TRACE] [1753464836873-6znndkbcp] [Transcription] Completed operation: transcribeAudio | {"duration":"5366ms"}
+[2025-07-25T17:34:07.645Z] [INFO] [1753464836873-6znndkbcp] [RecordTranscription] Transcription completed | {"textLength":22,"provider":"doubao"}
+[2025-07-25T17:34:07.650Z] [WARN] [1753464836873-6znndkbcp] [DoubaoClient] WebSocket closed | {"code":1000,"reason":"finish last sequence"}
+[2025-07-25T17:34:07.681Z] [TRACE] [1753464836873-6znndkbcp] [RecordTranscription] Completed operation: handleRecordAndTranscribe | {"duration":"5510ms"}
