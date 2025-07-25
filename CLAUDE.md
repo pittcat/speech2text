@@ -20,6 +20,12 @@ npm run publish      # Publish to Raycast Store
 node test-doubao-client.js
 ```
 
+## Important Files and Paths
+
+- **Log File**: `/Users/pittcat/Dev/Python/speech-to-text/speech-to-text-debug.log` - Automatically cleared on each startup
+- **Debug Guide**: See `DEBUG-GUIDE.md` for detailed debugging instructions
+- **Development Guide**: See `DEVELOPMENT.md` for technical implementation details
+
 ## Architecture Overview
 
 ### Core Components Structure
@@ -30,8 +36,12 @@ node test-doubao-client.js
 
 ### Dual AI Engine Architecture
 - **Doubao Engine**: WebSocket-based binary protocol with real-time streaming, requires complex frame handling and authentication
-- **Groq Engine**: REST API using Whisper model via groq-sdk, simpler HTTP-based integration
+- **Groq Engine**: REST API using Whisper model via groq-sdk, simpler HTTP-based integration (Note: Implementation pending)
 - **Service Selection**: Runtime switching between engines based on user preferences
+
+#### Supported Models
+- **Doubao**: Uses ByteDance's speech recognition service
+- **Groq Whisper**: Supports Whisper Large v3, Whisper Large v3 Turbo, and Distil Whisper models
 
 ## Key Technical Details
 
@@ -83,3 +93,14 @@ node test-doubao-client.js
 - Uses @raycast/api for UI components and system integration
 - Follows Raycast's design patterns and user experience guidelines
 - Commands configured for different entry points (record, history, logs)
+
+## API Configuration
+
+### Doubao API
+- Test credentials available in `test-doubao-client.js`
+- Requires app_id, token, and cluster parameters
+- Uses WebSocket connection to wss://openspeech.bytedance.com
+
+### Groq API
+- Requires GROQ_API_KEY in Raycast preferences
+- Uses groq-sdk for Whisper model integration
