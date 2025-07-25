@@ -1,0 +1,201 @@
+# 部署发布指南
+
+Raycast 语音转文字扩展的发布和部署最佳实践：
+
+## 📦 发布前检查清单
+- **功能完整性**：确保所有核心功能正常工作
+- **错误处理**：验证各种错误场景的处理
+- **配置验证**：检查偏好设置和配置管理
+- **性能测试**：验证音频处理和转录性能
+- **兼容性测试**：确保在不同 macOS 版本上正常运行
+
+## 🔧 构建和打包
+```json
+// package.json 构建脚本配置
+{
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit",
+    "dev": "npm run build && npx raycast dev",
+    "prepublish": "npm run build && npm run lint && npm run typecheck"
+  }
+}
+```
+
+## 📋 Raycast 扩展元数据
+参考 `[package.json](mdc:package.json)` 中的扩展配置：
+
+```json
+{
+  "name": "speech-to-text",
+  "title": "Speech to Text",
+  "description": "Convert speech to text using advanced AI transcription",
+  "icon": "extension-icon.png",
+  "author": "yourname",
+  "categories": ["Productivity", "Developer Tools"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "record-transcription",
+      "title": "Record & Transcribe",
+      "description": "Record audio and convert to text",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "doubaoAppKey",
+      "title": "Doubao App Key",
+      "description": "Your Doubao API app key",
+      "type": "password",
+      "required": false
+    }
+  ]
+}
+```
+
+## 🖼️ 资源文件管理
+- **图标文件**：确保 `assets/extension-icon.png` 符合 Raycast 规范
+- **截图素材**：准备高质量的功能演示截图
+- **README 文档**：编写详细的使用说明和安装指南
+- **CHANGELOG**：维护详细的版本变更记录
+
+## 🔐 安全和隐私
+```typescript
+// 敏感信息处理
+export function sanitizeForLogging(credentials: any): any {
+  return {
+    ...credentials,
+    // 只显示 key 的前4位
+    appKey: credentials.appKey ? `${credentials.appKey.slice(0, 4)}****` : undefined,
+    accessToken: credentials.accessToken ? `${credentials.accessToken.slice(0, 4)}****` : undefined,
+    secretKey: '****' // 完全隐藏
+  };
+}
+```
+
+## 📝 文档要求
+### README.md 结构
+```markdown
+# Speech to Text Extension
+
+## 功能特色
+- 🎙️ 高质量音频录制
+- 🤖 AI 驱动的语音识别
+- ⚡ 实时转录处理
+- 📝 可编辑的转录结果
+
+## 安装配置
+1. 安装扩展
+2. 配置 API 凭证
+3. 开始使用
+
+## 使用指南
+### 基本使用
+### 高级配置
+### 故障排除
+
+## 开发者信息
+### 技术栈
+### 贡献指南
+### 许可证
+```
+
+## 🚀 版本管理策略
+```json
+// 语义化版本控制
+{
+  "version": "1.2.3", // major.minor.patch
+  "scripts": {
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor", 
+    "version:major": "npm version major"
+  }
+}
+```
+
+### 版本发布流程
+1. **开发完成**：功能开发和测试完成
+2. **版本更新**：运行 `npm version [patch|minor|major]`
+3. **构建验证**：执行 `npm run prepublish`
+4. **提交代码**：提交所有变更到 git
+5. **发布标签**：创建版本标签 `git tag v1.2.3`
+
+## 🔍 质量保证
+```bash
+# 发布前质量检查脚本
+#!/bin/bash
+echo "🔍 开始质量检查..."
+
+# TypeScript 类型检查
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript 类型检查失败"
+  exit 1
+fi
+
+# ESLint 代码检查
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint 检查失败"
+  exit 1
+fi
+
+# 构建测试
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ 构建失败"
+  exit 1
+fi
+
+echo "✅ 质量检查通过，可以发布"
+```
+
+## 📊 发布后监控
+- **用户反馈**：关注 GitHub Issues 和用户评价
+- **错误监控**：收集和分析崩溃报告
+- **性能指标**：监控扩展的使用数据
+- **兼容性**：跟踪不同系统版本的兼容性问题
+
+## 🔄 更新和维护
+### 定期维护任务
+- **依赖更新**：定期更新第三方依赖包
+- **API 兼容**：跟踪豆包 API 的变更
+- **Raycast API**：适配 Raycast 新版本的 API 变化
+- **安全补丁**：及时修复安全漏洞
+
+### 热修复流程
+```bash
+# 紧急修复发布流程
+git checkout main
+git pull origin main
+# 修复问题
+git add .
+git commit -m "hotfix: 修复紧急问题"
+npm version patch
+git push origin main --tags
+```
+
+## 📱 用户体验优化
+- **首次使用引导**：提供清晰的配置向导
+- **错误信息友好**：使用用户易懂的错误提示
+- **性能优化**：确保扩展响应速度
+- **多语言支持**：考虑国际化需求
+
+## 🏪 Raycast Store 发布
+1. **提交申请**：通过 Raycast 官方渠道提交扩展
+2. **审核配合**：配合官方的审核过程
+3. **修改完善**：根据反馈完善扩展
+4. **正式发布**：通过审核后正式上架
+
+## 📈 成功指标
+- **安装量**：扩展的下载和安装数量
+- **用户评分**：Raycast Store 中的用户评分
+- **活跃度**：日活跃用户数和使用频率
+- **反馈质量**：用户反馈的满意度
+description:
+globs:
+alwaysApply: false
+---

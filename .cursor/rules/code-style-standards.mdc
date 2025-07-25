@@ -1,0 +1,88 @@
+# TypeScript/React 代码风格标准
+
+## 📝 命名约定
+- **组件命名**：使用 PascalCase，如 `TranscriptionHistory`
+- **函数命名**：使用 camelCase，如 `handleRecordAndTranscribe`
+- **变量命名**：使用 camelCase，如 `transcriptionResult`
+- **常量命名**：使用 UPPER_SNAKE_CASE，如 `DEFAULT_PREFERENCES`
+- **接口命名**：使用 PascalCase，如 `TranscriptionPreferences`
+- **类型命名**：使用 PascalCase，如 `AudioRecorderState`
+
+## 🔧 TypeScript 最佳实践
+- **严格类型检查**：避免使用 `any`，优先使用具体类型
+- **接口优于类型别名**：对于对象形状定义使用 `interface`
+- **泛型约束**：使用泛型提高代码复用性，如 `getPreferenceValues<T>()`
+- **可选属性**：明确标记可选属性 `property?: type`
+- **联合类型**：使用联合类型表示多种可能的值 `'idle' | 'recording' | 'processing'`
+
+## ⚛️ React 组件风格
+- **函数组件**：优先使用函数组件而非类组件
+- **Hook 使用**：遵循 Hook 规则，不在循环或条件语句中使用
+- **状态管理**：单一职责原则，每个 state 变量职责明确
+- **事件处理**：使用描述性的处理函数命名，如 `handleRecordingStart`
+
+## 📦 导入导出规范
+```typescript
+// 外部库导入放在最前面
+import { Form, ActionPanel, Action, Icon } from "@raycast/api";
+import { useState, useEffect } from "react";
+
+// 本地模块导入
+import { useAudioRecorder } from "../hooks/useAudioRecorder";
+import { transcribeAudio } from "../utils/ai/transcription";
+import type { TranscriptionResult } from "../types";
+
+// 导出优先使用命名导出
+export { TranscriptionHistory };
+// 默认导出用于主组件
+export default RecordTranscription;
+```
+
+## 🎨 代码格式化
+- **缩进**：使用 2 个空格缩进
+- **分号**：语句结尾必须使用分号
+- **引号**：优先使用双引号
+- **尾随逗号**：对象和数组的最后一项加尾随逗号
+- **行长度**：每行不超过 100 个字符
+
+## 🔍 注释规范
+```typescript
+/**
+ * 转录音频文件为文本
+ * @param audioBuffer - 音频数据缓冲区
+ * @param options - 转录选项配置
+ * @returns Promise<转录结果>
+ */
+export async function transcribeAudio(
+  audioBuffer: Buffer,
+  options: TranscriptionOptions
+): Promise<TranscriptionResult> {
+  // 具体实现...
+}
+
+// 单行注释用于解释复杂逻辑
+// TODO: 优化音频压缩算法提高转录速度
+```
+
+## 🚨 错误处理模式
+```typescript
+// 使用 Result 模式处理可能失败的操作
+type Result<T, E = Error> = 
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+// 统一的异步错误处理
+try {
+  const result = await riskyOperation();
+  // 处理成功情况
+} catch (error) {
+  // 记录详细错误信息
+  logger.error("OperationName", "Failed to execute", { error });
+  // 提供用户友好的错误提示
+  showToast({ style: Toast.Style.Failure, title: "操作失败" });
+}
+```
+description:
+globs:
+alwaysApply: false
+---

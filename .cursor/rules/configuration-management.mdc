@@ -1,0 +1,42 @@
+# 配置管理模式
+
+基于`[src/utils/config.ts](mdc:src/utils/config.ts)`的配置管理最佳实践：
+
+## 🔐 凭证存储
+- **本地文件存储**：使用`credentials.json`存储敏感信息
+- **路径管理**：使用`environment.supportPath`获取Raycast支持目录
+- **加密原则**：API密钥等敏感信息不在代码中硬编码
+
+## 📁 文件操作模式
+```typescript
+// 标准的配置文件读取模式
+const CONFIG_FILE = join(environment.supportPath, "credentials.json");
+
+export function loadCredentials(): Credentials {
+  try {
+    if (!existsSync(CONFIG_FILE)) {
+      return {};
+    }
+    const data = readFileSync(CONFIG_FILE, "utf-8");
+    return JSON.parse(data) as Credentials;
+  } catch (error) {
+    console.error("Failed to load credentials:", error);
+    return {};
+  }
+}
+```
+
+## 🔄 配置同步策略
+- **合并逻辑**：本地配置与Raycast preferences的优先级处理
+- **状态同步**：避免错误清空配置的陷阱
+- **验证检查**：使用统一的`isConfigured()`函数检查配置完整性
+
+## 🛡️ 错误处理
+- 配置文件缺失时返回空对象而非抛出异常
+- 文件解析失败时记录错误并返回默认值
+- 提供详细的日志记录用于调试
+
+## 🎯 类型安全
+- 为配置定义明确的TypeScript接口
+- 使用泛型约束确保类型安全
+- 配置验证函数返回boolean而非抛出异常

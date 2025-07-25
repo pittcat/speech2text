@@ -1,0 +1,51 @@
+# 豆包API集成模式
+
+基于`[src/utils/ai/transcription.ts](mdc:src/utils/ai/transcription.ts)`和`[src/utils/ai/doubao-client.ts](mdc:src/utils/ai/doubao-client.ts)`的API集成最佳实践：
+
+## 🔐 认证管理
+- **凭证获取**：使用`[src/utils/config.ts](mdc:src/utils/config.ts)`统一管理API凭证
+- **优先级处理**：Raycast preferences优先，本地配置作为fallback
+- **安全存储**：敏感信息不在代码中硬编码
+
+```typescript
+// 标准的凭证获取模式
+export function getPreferences(): TranscriptionPreferences {
+  const prefs = getPreferenceValues<TranscriptionPreferences>();
+  const doubaoCredentials = getDoubaoCredentials();
+
+  return {
+    ...DEFAULT_PREFERENCES,
+    ...prefs,
+    doubaoAppKey: prefs.doubaoAppKey || doubaoCredentials?.appKey,
+    doubaoAccessToken: prefs.doubaoAccessToken || doubaoCredentials?.accessToken,
+    doubaoSecretKey: prefs.doubaoSecretKey || doubaoCredentials?.secretKey,
+  };
+}
+```
+
+## 🎙️ 音频处理规范
+- **格式要求**：PCM格式，16kHz采样率，16位深度，单声道
+- **数据分段**：6400字节为一个音频块进行传输
+- **压缩传输**：使用gzip压缩减少网络传输量
+
+## 🌐 WebSocket通信模式
+- **连接管理**：建立连接后先发送配置消息
+- **消息协议**：遵循豆包API的二进制消息格式
+- **错误处理**：处理连接断开和重连逻辑
+- **状态追踪**：记录连接状态和序列号
+
+## 📊 实时转录处理
+- **部分结果**：处理中间转录结果的显示
+- **最终结果**：识别最后一个消息包获取完整结果
+- **结果合并**：将多个部分结果合并为完整文本
+
+## 🔍 调试和监控
+- **详细日志**：记录每个消息的发送和接收
+- **性能监控**：跟踪转录时间和数据传输量
+- **错误追踪**：记录API调用失败的详细信息
+
+## ⚡ 性能优化
+- **连接复用**：避免频繁建立WebSocket连接
+- **数据压缩**：对音频数据进行压缩传输
+- **异步处理**：使用Promise处理异步API调用
+- **超时控制**：设置合理的请求超时时间

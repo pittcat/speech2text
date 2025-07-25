@@ -1,0 +1,130 @@
+# 性能优化最佳实践
+
+针对语音转文字应用的性能优化指南：
+
+## 🎙️ 音频处理优化
+- **流式处理**：使用流式音频处理，避免加载整个音频文件到内存
+- **采样率优化**：统一使用 16kHz 采样率，避免不必要的重采样
+- **缓冲区大小**：使用 6400 字节的音频块，与豆包 API 要求保持一致
+- **压缩传输**：对音频数据使用 gzip 压缩减少网络传输
+
+```typescript
+// 优化的音频数据分块处理
+const CHUNK_SIZE = 6400; // bytes
+const chunks = [];
+for (let i = 0; i < audioBuffer.length; i += CHUNK_SIZE) {
+  chunks.push(audioBuffer.slice(i, i + CHUNK_SIZE));
+}
+```
+
+## 🌐 网络请求优化
+- **连接复用**：WebSocket 连接尽可能复用，避免频繁建立连接
+- **超时设置**：设置合理的请求超时时间（建议 30 秒）
+- **重试机制**：实现指数退避的重试策略
+- **并发控制**：限制同时进行的转录请求数量
+
+## 💾 内存管理
+- **及时释放**：音频处理完成后立即释放大的 Buffer 对象
+- **对象池**：对于频繁创建的小对象使用对象池模式
+- **弱引用**：对于缓存数据使用 WeakMap 避免内存泄漏
+
+```typescript
+// 内存优化的音频处理
+function processAudioChunk(chunk: Buffer): void {
+  try {
+    // 处理音频块
+    sendAudioChunk(chunk);
+  } finally {
+    // 确保释放内存
+    chunk = null;
+  }
+}
+```
+
+## ⚛️ React 性能优化
+- **useMemo 缓存**：对复杂计算使用 useMemo 缓存结果
+- **useCallback 稳定**：为传递给子组件的函数使用 useCallback
+- **状态分离**：将频繁更新的状态与其他状态分离
+- **组件拆分**：将大组件拆分为更小的组件减少重渲染
+
+```typescript
+// React 性能优化示例
+const TranscriptionComponent = () => {
+  // 缓存复杂计算
+  const processedText = useMemo(() => {
+    return formatTranscriptionText(transcriptionResult.text);
+  }, [transcriptionResult.text]);
+
+  // 稳定的事件处理函数
+  const handleTextChange = useCallback((newText: string) => {
+    setTranscriptionResult(prev => ({ ...prev, text: newText }));
+  }, []);
+
+  return <Form.TextArea value={processedText} onChange={handleTextChange} />;
+};
+```
+
+## 📁 文件系统优化
+- **异步 IO**：使用异步文件操作避免阻塞主线程
+- **流式读写**：对大文件使用流式处理
+- **临时文件清理**：及时清理不需要的临时音频文件
+- **配置缓存**：缓存配置文件读取结果
+
+## 🔄 状态更新优化
+- **批量更新**：使用 React 的自动批处理或手动批处理状态更新
+- **防抖处理**：对频繁的用户输入使用防抖处理
+- **最小化重渲染**：只更新必要的组件状态
+
+## 🎯 算法优化
+- **早期返回**：在条件检查中使用早期返回减少嵌套
+- **缓存计算**：缓存昂贵的计算结果
+- **懒加载**：延迟加载非关键功能模块
+
+```typescript
+// 优化的配置检查函数
+function isConfigured(prefs: TranscriptionPreferences): boolean {
+  // 早期返回减少计算
+  if (!prefs.doubaoAppKey) return false;
+  if (!prefs.doubaoAccessToken) return false;
+  if (!prefs.doubaoSecretKey) return false;
+  
+  return true;
+}
+```
+
+## 📊 性能监控
+- **关键指标**：监控音频处理时间、网络请求延迟、内存使用
+- **性能日志**：记录关键操作的执行时间
+- **资源跟踪**：跟踪音频文件大小、转录字符数等资源使用
+
+```typescript
+// 性能监控示例
+async function transcribeWithMetrics(audioBuffer: Buffer) {
+  const startTime = Date.now();
+  const audioSize = audioBuffer.length;
+  
+  try {
+    const result = await transcribeAudio(audioBuffer);
+    const duration = Date.now() - startTime;
+    
+    logger.info("Performance", "Transcription completed", {
+      audioSize,
+      duration,
+      textLength: result.text.length,
+      throughput: audioSize / duration
+    });
+    
+    return result;
+  } catch (error) {
+    logger.error("Performance", "Transcription failed", { 
+      audioSize, 
+      duration: Date.now() - startTime 
+    });
+    throw error;
+  }
+}
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,192 @@
+# 测试策略指南
+
+针对语音转文字 Raycast 扩展的测试最佳实践：
+
+## 🧪 测试分层策略
+- **单元测试**：测试独立的函数和工具类，如 `[src/utils/formatting.ts](mdc:src/utils/formatting.ts)`
+- **集成测试**：测试模块之间的交互，如音频录制与转录的集成
+- **组件测试**：测试 React 组件的行为和渲染
+- **端到端测试**：测试完整的用户流程
+
+## 🎯 测试重点领域
+
+### 音频处理测试
+```typescript
+// 测试音频格式转换
+describe('Audio Processing', () => {
+  test('should convert audio to correct format', () => {
+    const mockAudioBuffer = generateMockAudio();
+    const result = convertToPCM(mockAudioBuffer);
+    
+    expect(result.sampleRate).toBe(16000);
+    expect(result.channels).toBe(1);
+    expect(result.bitDepth).toBe(16);
+  });
+
+  test('should chunk audio data correctly', () => {
+    const audioBuffer = Buffer.alloc(20000);
+    const chunks = chunkAudioData(audioBuffer, 6400);
+    
+    expect(chunks).toHaveLength(4);
+    expect(chunks[0].length).toBe(6400);
+  });
+});
+```
+
+### API 集成测试
+```typescript
+// 测试豆包 API 集成
+describe('Doubao API Integration', () => {
+  test('should handle successful transcription', async () => {
+    const mockAudioBuffer = generateMockAudio();
+    const mockPreferences = getMockPreferences();
+    
+    const result = await transcribeAudio(mockAudioBuffer, mockPreferences);
+    
+    expect(result.success).toBe(true);
+    expect(result.text).toBeTruthy();
+    expect(result.confidence).toBeGreaterThan(0);
+  });
+
+  test('should handle API errors gracefully', async () => {
+    // 模拟网络错误
+    mockWebSocketError();
+    
+    const result = await transcribeAudio(mockAudioBuffer, mockPreferences);
+    
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+});
+```
+
+### 配置管理测试
+```typescript
+// 测试配置文件处理
+describe('Configuration Management', () => {
+  test('should load credentials from file', () => {
+    mockFileSystem({
+      'credentials.json': JSON.stringify({
+        appKey: 'test-key',
+        accessToken: 'test-token'
+      })
+    });
+
+    const credentials = loadCredentials();
+    expect(credentials.appKey).toBe('test-key');
+  });
+
+  test('should merge preferences correctly', () => {
+    const prefs = getPreferences();
+    expect(prefs.doubaoAppKey).toBeDefined();
+    expect(typeof prefs.maxRecordingDuration).toBe('number');
+  });
+});
+```
+
+## 🔧 测试工具和框架
+- **Jest**：作为主要的测试框架
+- **@testing-library/react**：用于 React 组件测试
+- **Mock Service Worker (MSW)**：模拟 API 请求
+- **jest-mock-extended**：创建类型安全的模拟对象
+
+## 🎭 模拟（Mocking）策略
+```typescript
+// 模拟 Raycast API
+jest.mock('@raycast/api', () => ({
+  showToast: jest.fn(),
+  getPreferenceValues: jest.fn(() => mockPreferences),
+  environment: {
+    supportPath: '/mock/support/path'
+  }
+}));
+
+// 模拟音频录制 Hook
+jest.mock('../hooks/useAudioRecorder', () => ({
+  useAudioRecorder: () => ({
+    isRecording: false,
+    startRecording: jest.fn(),
+    stopRecording: jest.fn(),
+    audioBuffer: null
+  })
+}));
+```
+
+## 📊 测试覆盖率目标
+- **整体覆盖率**：至少 80%
+- **核心业务逻辑**：90% 以上
+- **错误处理代码**：100%
+- **配置和初始化代码**：85% 以上
+
+## 🚀 测试自动化
+```json
+// package.json 测试脚本
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
+  }
+}
+```
+
+## 🔍 测试数据管理
+```typescript
+// 测试数据工厂
+export const TestDataFactory = {
+  createMockAudioBuffer: (size = 1024) => Buffer.alloc(size),
+  
+  createMockPreferences: (): TranscriptionPreferences => ({
+    doubaoAppKey: 'test-app-key',
+    doubaoAccessToken: 'test-access-token',
+    doubaoSecretKey: 'test-secret-key',
+    maxRecordingDuration: 300,
+    language: 'zh-CN'
+  }),
+  
+  createMockTranscriptionResult: (): TranscriptionResult => ({
+    text: '这是一个测试转录结果',
+    confidence: 0.95,
+    language: 'zh-CN',
+    timestamp: Date.now()
+  })
+};
+```
+
+## 📝 测试文档规范
+- **测试用例命名**：使用描述性的名称说明测试内容
+- **测试分组**：使用 `describe` 按功能模块分组
+- **断言清晰**：每个测试只验证一个具体行为
+- **错误场景**：确保测试覆盖各种错误情况
+
+## 🐛 调试和故障排除
+```typescript
+// 测试调试技巧
+describe('Debug Tests', () => {
+  test('should provide detailed error information', async () => {
+    try {
+      await transcribeAudio(invalidAudioBuffer);
+    } catch (error) {
+      // 详细的错误信息便于调试
+      console.log('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        context: { audioBuffer: invalidAudioBuffer }
+      });
+      
+      expect(error.message).toContain('Invalid audio format');
+    }
+  });
+});
+```
+
+## 🔄 持续集成测试
+- **预提交检查**：运行单元测试和代码质量检查
+- **CI/CD 管道**：自动运行完整测试套件
+- **测试报告**：生成详细的测试覆盖率报告
+- **性能测试**：监控关键操作的性能指标
+description:
+globs:
+alwaysApply: false
+---

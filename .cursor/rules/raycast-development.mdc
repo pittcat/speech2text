@@ -1,0 +1,37 @@
+# Raycast开发最佳实践
+
+## 🎨 UI组件使用
+- 使用Raycast提供的组件：`Form`, `ActionPanel`, `Action`, `Icon`, `Toast`
+- 所有用户交互都通过`ActionPanel`中的`Action`来处理
+- 使用合适的快捷键：`shortcut={{ modifiers: ["cmd"], key: "c" }}`
+- 表单字段要有合理的`id`和`title`
+
+## ⚛️ React Hooks模式
+- 使用`useState`管理组件状态
+- 使用`useEffect`处理副作用和初始化
+- 自定义Hook放在`src/hooks/`目录下
+- Hook命名以`use`开头，如`useAudioRecorder`
+
+## 🔧 状态管理
+- 配置状态通过`[src/utils/config.ts](mdc:src/utils/config.ts)`管理
+- 使用`getPreferenceValues()`获取Raycast偏好设置
+- 本地状态优先使用`useState`
+- 持久化状态使用文件系统存储
+
+## 📝 错误处理
+- 使用`try-catch`包装异步操作
+- 通过`showToast`显示用户友好的错误信息
+- 详细错误通过`[src/utils/logger.ts](mdc:src/utils/logger.ts)`记录
+- 错误处理要优雅降级，不影响用户体验
+
+## 🎯 TypeScript最佳实践
+- 定义清晰的接口类型，参考`[src/types.ts](mdc:src/types.ts)`
+- 使用泛型约束API调用：`getPreferenceValues<TranscriptionPreferences>()`
+- 避免使用`any`，优先使用具体类型
+- 为函数参数和返回值定义类型
+
+## 📱 用户体验
+- 提供清晰的loading状态和进度反馈
+- 使用合适的图标和文案
+- 支持键盘快捷键操作
+- 添加`info`属性解释复杂功能的用途

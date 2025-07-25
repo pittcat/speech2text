@@ -1,0 +1,48 @@
+# 日志和调试最佳实践
+
+基于`[src/utils/logger.ts](mdc:src/utils/logger.ts)`的统一日志记录模式：
+
+## 📝 日志级别使用
+- **TRACE**: 详细的执行流程跟踪，如函数调用和数据传递
+- **DEBUG**: 开发调试信息，如状态变化和中间结果
+- **INFO**: 重要操作的完成状态，如配置加载成功
+- **WARN**: 可恢复的错误或异常情况
+- **ERROR**: 严重错误，可能影响功能正常使用
+
+## 🎯 日志记录模式
+```typescript
+// 操作开始和结束的标准模式
+trace("ComponentName", "Starting operation: operationName");
+// ... 操作逻辑
+trace("ComponentName", "Completed operation: operationName", { duration: "12ms" });
+
+// 状态变化记录
+debug("ComponentName", "State changed", { 
+  from: oldState, 
+  to: newState, 
+  timestamp: Date.now() 
+});
+
+// 错误处理记录
+try {
+  // 操作
+} catch (error) {
+  error("ComponentName", "Operation failed", { error, context });
+}
+```
+
+## 🔍 调试信息结构化
+- 使用结构化的日志对象而非纯字符串
+- 包含足够的上下文信息用于问题定位
+- 敏感信息要做脱敏处理（如API密钥显示前4位）
+
+## 📊 性能监控
+- 记录重要操作的执行时间
+- 监控API调用的响应时间
+- 跟踪资源使用情况（如音频文件大小）
+
+## 🛠️ 调试技巧
+- 使用`🐛 DEBUG:`前缀标记调试专用日志
+- 在关键状态转换点添加日志
+- 记录函数的输入参数和返回值
+- 使用日志追踪异步操作的完整生命周期

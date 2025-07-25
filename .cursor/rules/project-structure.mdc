@@ -1,0 +1,25 @@
+# 项目结构指南
+
+这是一个Raycast语音转文字插件项目，主要文件结构如下：
+
+## 🏗️ 核心文件
+- **[src/record-transcription.tsx](mdc:src/record-transcription.tsx)** - 主要UI组件，包含录音、转录和配置界面
+- **[src/utils/config.ts](mdc:src/utils/config.ts)** - 配置管理模块，处理API凭证的持久化存储
+- **[src/utils/ai/transcription.ts](mdc:src/utils/ai/transcription.ts)** - 转录逻辑，与豆包API集成
+- **[src/types.ts](mdc:src/types.ts)** - TypeScript类型定义
+
+## 🔧 工具模块
+- **[src/hooks/useAudioRecorder.ts](mdc:src/hooks/useAudioRecorder.ts)** - 音频录制React Hook
+- **[src/utils/logger.ts](mdc:src/utils/logger.ts)** - 统一日志记录工具
+- **[src/utils/audio.ts](mdc:src/utils/audio.ts)** - 音频文件处理工具
+- **[src/utils/history.ts](mdc:src/utils/history.ts)** - 转录历史管理
+
+## 📦 配置文件
+- **[package.json](mdc:package.json)** - 项目依赖和Raycast插件配置
+- **[raycast-env.d.ts](mdc:raycast-env.d.ts)** - Raycast环境类型定义
+
+## 🎯 技术栈
+- **Raycast API** - 插件框架
+- **React + TypeScript** - UI和逻辑
+- **豆包API** - 语音识别服务
+- **Node.js** - 系统交互和文件操作

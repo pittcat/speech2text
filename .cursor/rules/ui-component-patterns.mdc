@@ -1,0 +1,75 @@
+# UI组件开发模式
+
+基于`[src/record-transcription.tsx](mdc:src/record-transcription.tsx)`的Raycast UI组件开发模式：
+
+## 🎨 Form组件最佳实践
+- **可编辑字段**：提供`onChange`处理函数，不要设为只读
+- **用户反馈**：使用`info`属性提供使用说明
+- **占位符文本**：为空字段提供有意义的`placeholder`
+- **字段验证**：在`onChange`中进行实时验证
+
+```typescript
+// 正确的可编辑TextArea模式
+<Form.TextArea
+  id="result"
+  title="Transcription Result"
+  value={transcriptionResult.text}
+  onChange={(newText) => {
+    setTranscriptionResult({
+      ...transcriptionResult,
+      text: newText
+    });
+  }}
+  info="您可以编辑转录结果来修正识别错误"
+/>
+```
+
+## ⚡ ActionPanel设计原则
+- **优先级排序**：最重要的操作放在最前面
+- **快捷键配置**：为常用操作分配合理的快捷键
+- **条件显示**：根据状态显示相关操作
+- **分组组织**：使用逻辑分组整理操作
+
+```typescript
+// ActionPanel最佳实践
+<ActionPanel>
+  {/* 主要操作 */}
+  <Action
+    title="Start Recording"
+    icon={Icon.Microphone}
+    onAction={handleRecordAndTranscribe}
+    shortcut={{ modifiers: [], key: "enter" }}
+  />
+  
+  {/* 转录结果相关操作 */}
+  {transcriptionResult?.text && (
+    <>
+      <Action
+        title="Copy Text"
+        icon={Icon.Clipboard}
+        onAction={() => Clipboard.copy(transcriptionResult.text)}
+        shortcut={{ modifiers: ["cmd"], key: "c" }}
+      />
+      
+      <Action
+        title="Set as Context"
+        icon={Icon.Plus}
+        onAction={() => setHighlightedText(transcriptionResult.text)}
+        shortcut={{ modifiers: ["cmd"], key: "t" }}
+      />
+    </>
+  )}
+</ActionPanel>
+```
+
+## 🔄 状态管理模式
+- **分离关注点**：UI状态与业务逻辑分离
+- **状态同步**：确保UI状态与数据状态一致
+- **加载状态**：提供清晰的loading反馈
+- **错误状态**：优雅处理和显示错误
+
+## 📱 用户体验优化
+- **即时反馈**：操作后立即显示结果
+- **键盘友好**：支持键盘导航和快捷键
+- **视觉层次**：使用合适的图标和标题
+- **信息密度**：避免界面过于拥挤
