@@ -8,18 +8,12 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
-  /** AI Provider - Choose your AI provider for transcription */
-  "aiProvider": "doubao" | "groq",
   /** Doubao App Key - Your Doubao App Key (required for Doubao) */
   "doubaoAppKey"?: string,
   /** Doubao Access Token - Your Doubao Access Token (required for Doubao) */
   "doubaoAccessToken"?: string,
   /** Doubao Secret Key - Your Doubao Secret Key (required for Doubao) */
   "doubaoSecretKey"?: string,
-  /** Groq API Key - Your Groq API key for speech-to-text transcription (required for Groq) */
-  "apiKey"?: string,
-  /** Transcription Model - The Groq model to use for transcription */
-  "model": "whisper-large-v3" | "whisper-large-v3-turbo" | "distil-whisper-large-v3-en",
   /** Default Language - Selecting a specific language can improve transcription accuracy */
   "language": "auto" | "en" | "es" | "fr" | "de" | "it" | "pt" | "zh" | "ja" | "ko" | "ru",
   /** Default Prompt - Default prompt text to guide the AI transcription */

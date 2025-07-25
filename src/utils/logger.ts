@@ -41,7 +41,7 @@ class Logger {
     this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // 设置日志目录为项目根目录
-    this.logDir = join(homedir(), "Dev/Python/voice2text/speech-to-text");
+    this.logDir = join(homedir(), "Dev/Python/speech-to-text");
 
     // 设置固定的日志文件名
     this.currentLogFile = join(this.logDir, "speech-to-text-debug.log");

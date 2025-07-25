@@ -1,10 +1,8 @@
 export interface TranscriptionPreferences {
-  aiProvider: "doubao" | "groq";
+  aiProvider: "doubao";
   doubaoAppKey?: string;
   doubaoAccessToken?: string;
   doubaoSecretKey?: string;
-  apiKey?: string; // Groq API Key
-  model?: string;
   language?: string;
   promptText?: string;
   userTerms?: string;

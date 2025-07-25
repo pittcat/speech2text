@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   ActionPanel,
@@ -17,6 +17,12 @@ import { TranscriptionPreferences, TranscriptionResult } from "./types";
 import { SUPPORTED_LANGUAGES } from "./constants";
 import { logger, trace, debug, info, warn, error } from "./utils/logger";
 import TranscriptionHistory from "./transcription-history";
+import {
+  isDoubaoConfigured,
+  saveDoubaoCredentials,
+  clearCredentials,
+  syncConfigurationState,
+} from "./utils/config";
 
 export default function RecordTranscription() {
   const { push } = useNavigation();
@@ -28,17 +34,56 @@ export default function RecordTranscription() {
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
   const [highlightedText, setHighlightedText] = useState<string>("");
 
+  // 配置编辑状态 - 使用更安全的初始化
+  const [showDoubaoConfig, setShowDoubaoConfig] = useState(true); // 默认显示配置表单
+  
+  // 临时配置存储（编辑时使用）
+  const [tempDoubaoConfig, setTempDoubaoConfig] = useState({
+    appKey: "",
+    accessToken: "",
+    secretKey: "",
+  });
+
   // 记录组件初始化
   useEffect(() => {
-    info("RecordTranscription", "Component initialized", {
-      preferences: currentPreferences,
-      aiProvider: currentPreferences.aiProvider,
-      logFile: logger.getLogFilePath(),
-    });
-    
-    // 添加调试日志
-    console.log("🐛 DEBUG: Current AI Provider:", currentPreferences.aiProvider);
-    console.log("🐛 DEBUG: All preferences:", currentPreferences);
+    try {
+      debug("RecordTranscription", "🚀 Component initializing...");
+      
+      // 同步配置状态
+      debug("RecordTranscription", "🔧 Starting configuration sync");
+      const syncResult = syncConfigurationState();
+      debug("RecordTranscription", "🔧 Configuration sync result", { success: syncResult });
+      
+      // 重新检查配置状态
+      debug("RecordTranscription", "🔧 Checking configuration status");
+      const isConfigured = isDoubaoConfigured();
+      const shouldShowConfig = !isConfigured;
+      
+      debug("RecordTranscription", "🔧 Configuration status check", {
+        isDoubaoConfigured: isConfigured,
+        currentShowDoubaoConfig: showDoubaoConfig,
+        willSetShowDoubaoConfigTo: shouldShowConfig,
+      });
+      
+      setShowDoubaoConfig(shouldShowConfig);
+      
+      info("RecordTranscription", "Component initialized", {
+        preferences: currentPreferences,
+        isDoubaoConfigured: isConfigured,
+        showDoubaoConfig: shouldShowConfig,
+        logFile: logger.getLogFilePath(),
+      });
+      
+      // 添加调试日志
+      console.log("🐛 DEBUG: All preferences:", currentPreferences);
+      console.log("🐛 DEBUG: Is Doubao configured:", isConfigured);
+      console.log("🐛 DEBUG: Show config form:", shouldShowConfig);
+    } catch (error) {
+      error("RecordTranscription", "Component initialization failed", error);
+      console.error("🐛 DEBUG: Component initialization error:", error);
+      // 确保组件仍能正常工作
+      setShowDoubaoConfig(true);
+    }
   }, []);
 
   const {
@@ -48,25 +93,7 @@ export default function RecordTranscription() {
     formatDuration,
   } = useAudioRecorder();
 
-  // 获取高亮文本（如果启用）
-  useEffect(() => {
-    if (currentPreferences.enableContext) {
-      trace("RecordTranscription", "Attempting to read clipboard for context");
-      Clipboard.readText()
-        .then((text) => {
-          if (text) {
-            debug("RecordTranscription", "Clipboard text retrieved", {
-              textLength: text.length,
-              preview: text.substring(0, 50) + "...",
-            });
-            setHighlightedText(text);
-          }
-        })
-        .catch((err) => {
-          warn("RecordTranscription", "Failed to read clipboard", err);
-        });
-    }
-  }, [currentPreferences.enableContext]);
+  // Context现在需要手动设置，不再自动读取剪切板
 
   // 监控录制状态变化
   useEffect(() => {
@@ -158,7 +185,7 @@ export default function RecordTranscription() {
         // 执行转写
         const prompt = buildPromptWithContext();
         debug("RecordTranscription", "Starting transcription", {
-          provider: currentPreferences.aiProvider,
+          provider: "doubao",
           language: currentPreferences.language,
           promptLength: prompt.length,
         });
@@ -181,10 +208,7 @@ export default function RecordTranscription() {
         // 复制到剪贴板
         await Clipboard.copy(result.text);
 
-        // 如果启用了Context功能，更新Context显示为最新的转写结果
-        if (currentPreferences.enableContext) {
-          setHighlightedText(result.text);
-        }
+        // 不再自动更新Context - 让用户主动选择
 
         await showToast({
           style: Toast.Style.Success,
@@ -277,24 +301,127 @@ export default function RecordTranscription() {
     }
   };
 
+  // 保存豆包配置
+  const saveDoubaoConfig = async () => {
+    debug("RecordTranscription", "🔧 Starting to save Doubao config", {
+      appKey: tempDoubaoConfig.appKey ? `${tempDoubaoConfig.appKey.substring(0, 4)}****` : "empty",
+      accessToken: tempDoubaoConfig.accessToken ? `${tempDoubaoConfig.accessToken.substring(0, 4)}****` : "empty", 
+      secretKey: tempDoubaoConfig.secretKey ? `${tempDoubaoConfig.secretKey.substring(0, 4)}****` : "empty",
+    });
+
+    if (!tempDoubaoConfig.appKey || !tempDoubaoConfig.accessToken || !tempDoubaoConfig.secretKey) {
+      error("RecordTranscription", "Configuration incomplete - missing fields", {
+        hasAppKey: !!tempDoubaoConfig.appKey,
+        hasAccessToken: !!tempDoubaoConfig.accessToken,
+        hasSecretKey: !!tempDoubaoConfig.secretKey,
+      });
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Configuration incomplete",
+        message: "Please fill in all Doubao credentials",
+      });
+      return;
+    }
+
+    debug("RecordTranscription", "🔧 All fields validated, calling saveDoubaoCredentials");
+    const success = saveDoubaoCredentials(
+      tempDoubaoConfig.appKey,
+      tempDoubaoConfig.accessToken,
+      tempDoubaoConfig.secretKey
+    );
+
+    debug("RecordTranscription", "🔧 saveDoubaoCredentials result", { success });
+
+    if (success) {
+      info("RecordTranscription", "✅ Doubao config saved successfully");
+      
+      // 更新显示状态
+      debug("RecordTranscription", "🔧 Setting showDoubaoConfig to false");
+      setShowDoubaoConfig(false);
+      
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Doubao configured",
+        message: "Credentials saved successfully",
+      });
+      
+      // 清空临时存储
+      debug("RecordTranscription", "🔧 Clearing temp config");
+      setTempDoubaoConfig({ appKey: "", accessToken: "", secretKey: "" });
+      
+      // 验证保存结果
+      const isConfigured = isDoubaoConfigured();
+      debug("RecordTranscription", "🔧 Post-save verification", { 
+        isDoubaoConfigured: isConfigured,
+        showDoubaoConfig: false,
+      });
+      
+    } else {
+      error("RecordTranscription", "❌ Failed to save Doubao config");
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Save failed",
+        message: "Could not save Doubao credentials",
+      });
+    }
+  };
+
+
+
+  // 编辑配置
+  const editDoubaoConfig = () => {
+    setShowDoubaoConfig(true);
+  };
+
+  // 删除配置
+  const deleteDoubaoConfig = async () => {
+    const success = clearCredentials("doubao");
+    if (success) {
+      setShowDoubaoConfig(true);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Configuration cleared",
+        message: "Doubao credentials removed",
+      });
+    }
+  };
+
   return (
     <Form
       navigationTitle={
-        recorderState.isRecording ? "Recording... Press Enter to stop" : "Speech to Text"
+        recorderState.isRecording ? "Recording... Press Enter to stop" : "Speech to Text - Press Enter to start"
       }
       actions={
         <ActionPanel>
+          {/* 主要录音功能 */}
           <Action
-                    title={recorderState.isRecording ? "Stop Recording (Press Cmd+Enter)" : "Start Recording"}
-                    icon={recorderState.isRecording ? Icon.Stop : Icon.Microphone}
-                    onAction={handleRecordAndTranscribe}
-                    shortcut={
-                      recorderState.isRecording 
-                        ? { modifiers: ["cmd"], key: "enter" }  // 录音时需要 Cmd+Enter 停止
-                        : { modifiers: ["cmd"], key: "r" }      // 未录音时 Cmd+R 开始
-                    }
+            title={recorderState.isRecording ? "Stop Recording" : "Start Recording"}
+            icon={recorderState.isRecording ? Icon.Stop : Icon.Microphone}
+            onAction={handleRecordAndTranscribe}
+            shortcut={{ modifiers: [], key: "enter" }}
           />
-          {transcriptionResult && (
+          
+          {/* 配置管理操作 */}
+          {showDoubaoConfig === true && (
+            <Action
+              title="💾 Save Doubao Config"
+              icon={Icon.CheckCircle}
+              onAction={saveDoubaoConfig}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
+            />
+          )}
+          
+          {showDoubaoConfig !== true && (
+            <Action
+              title="Edit Doubao Config"
+              icon={Icon.Gear}
+              onAction={editDoubaoConfig}
+              shortcut={{ modifiers: ["cmd"], key: "e" }}
+            />
+          )}
+          
+          {/* 转写结果相关功能 */}
+          {transcriptionResult?.text && (
             <>
               <Action
                 title="Copy Text"
@@ -302,22 +429,24 @@ export default function RecordTranscription() {
                 onAction={() => Clipboard.copy(transcriptionResult.text)}
                 shortcut={{ modifiers: ["cmd"], key: "c" }}
               />
-              <Action
-                title="View History"
-                icon={Icon.Clock}
-                onAction={() => push(<TranscriptionHistory />)}
-                shortcut={{ modifiers: ["cmd"], key: "h" }}
-              />
+              
+              {currentPreferences?.enableContext && (
+                <Action
+                  title="Set as Context"
+                  icon={Icon.Plus}
+                  onAction={() => setHighlightedText(transcriptionResult.text)}
+                  shortcut={{ modifiers: ["cmd"], key: "t" }}
+                />
+              )}
             </>
           )}
-          {currentPreferences.enableContext && (
-            <Action
-              title="Refresh Context"
-              icon={Icon.ArrowClockwise}
-              onAction={refreshContext}
-              shortcut={{ modifiers: ["cmd"], key: "u" }}
-            />
-          )}
+          
+          <Action
+            title="View History"
+            icon={Icon.Clock}
+            onAction={() => push(<TranscriptionHistory />)}
+            shortcut={{ modifiers: ["cmd"], key: "h" }}
+          />
         </ActionPanel>
       }
       isLoading={isTranscribing}
@@ -336,27 +465,23 @@ export default function RecordTranscription() {
           id="result"
           title="Transcription Result"
           value={transcriptionResult.text}
-          onChange={() => {}} // Read-only
+          onChange={(newText) => {
+            setTranscriptionResult({
+              ...transcriptionResult,
+              text: newText
+            });
+          }}
+          info="您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。"
         />
       )}
 
       <Form.Separator />
 
-      {/* AI 提供商选择 */}
-      <Form.Dropdown
-        id="aiProvider"
+      {/* AI 提供商 */}
+      <Form.Description
         title="AI Provider"
-        value={currentPreferences.aiProvider}
-        onChange={(value) => {
-          console.log("🐛 DEBUG: AI Provider changed to:", value);
-          handlePreferenceChange("aiProvider", value);
-        }}
-        autoFocus={false}
-        isDisabled={recorderState.isRecording}
-      >
-        <Form.Dropdown.Item value="doubao" title="Doubao (豆包)" />
-        <Form.Dropdown.Item value="groq" title="Groq (Whisper)" />
-      </Form.Dropdown>
+        text="Doubao (豆包) - 字节跳动语音识别服务"
+      />
 
       {/* 语言选择 */}
       <Form.Dropdown
@@ -371,73 +496,58 @@ export default function RecordTranscription() {
         ))}
       </Form.Dropdown>
 
-      {/* Groq 模型选择（仅在选择 Groq 时显示） */}
-      {(() => {
-        const shouldShow = currentPreferences.aiProvider === "groq";
-        console.log("🐛 DEBUG: Should show Groq model?", shouldShow, "AI Provider:", currentPreferences.aiProvider);
-        return shouldShow;
-      })() && (
-        <Form.Dropdown
-          id="model"
-          title="Model"
-          value={currentPreferences.model || "whisper-large-v3"}
-          onChange={(value) => handlePreferenceChange("model", value)}
-          isDisabled={recorderState.isRecording}
-        >
-          <Form.Dropdown.Item value="whisper-large-v3" title="Whisper Large v3" />
-          <Form.Dropdown.Item value="whisper-large-v3-turbo" title="Whisper Large v3 Turbo" />
-          <Form.Dropdown.Item
-            value="distil-whisper-large-v3-en"
-            title="Distil Whisper (English only)"
-          />
-        </Form.Dropdown>
-      )}
 
-      {/* 豆包配置（仅在选择豆包时显示） */}
-      {(() => {
-        const shouldShow = currentPreferences.aiProvider === "doubao";
-        console.log("🐛 DEBUG: Should show Doubao config?", shouldShow, "AI Provider:", currentPreferences.aiProvider);
-        return shouldShow;
-      })() && (
+
+      {/* 豆包配置 */}
         <>
-          <Form.TextField
-            id="doubaoAppKey"
-            title="Doubao App Key"
-            placeholder="Enter your Doubao App Key"
-            value={currentPreferences.doubaoAppKey || ""}
-            onChange={(value) => handlePreferenceChange("doubaoAppKey", value)}
-            isDisabled={recorderState.isRecording}
-          />
-          <Form.PasswordField
-            id="doubaoAccessToken" 
-            title="Doubao Access Token"
-            placeholder="Enter your Doubao Access Token"
-            value={currentPreferences.doubaoAccessToken || ""}
-            onChange={(value) => handlePreferenceChange("doubaoAccessToken", value)}
-            isDisabled={recorderState.isRecording}
-          />
-          <Form.PasswordField
-            id="doubaoSecretKey"
-            title="Doubao Secret Key" 
-            placeholder="Enter your Doubao Secret Key"
-            value={currentPreferences.doubaoSecretKey || ""}
-            onChange={(value) => handlePreferenceChange("doubaoSecretKey", value)}
-            isDisabled={recorderState.isRecording}
-          />
+          {showDoubaoConfig ? (
+            <>
+              <Form.TextField
+                id="doubaoAppKey"
+                title="Doubao App Key"
+                placeholder="Enter your Doubao App Key"
+                value={tempDoubaoConfig.appKey}
+                onChange={(value) => setTempDoubaoConfig(prev => ({ ...prev, appKey: value }))}
+                isDisabled={recorderState.isRecording}
+              />
+              <Form.TextField
+                id="doubaoAccessToken" 
+                title="Doubao Access Token"
+                placeholder="Enter your Doubao Access Token"
+                value={tempDoubaoConfig.accessToken}
+                onChange={(value) => setTempDoubaoConfig(prev => ({ ...prev, accessToken: value }))}
+                isDisabled={recorderState.isRecording}
+              />
+              <Form.TextField
+                id="doubaoSecretKey"
+                title="Doubao Secret Key" 
+                placeholder="Enter your Doubao Secret Key"
+                value={tempDoubaoConfig.secretKey}
+                onChange={(value) => setTempDoubaoConfig(prev => ({ ...prev, secretKey: value }))}
+                isDisabled={recorderState.isRecording}
+              />
+              <Form.Description 
+                title=""
+                text={`💡 配置保存后将不再显示这些字段，避免密码泄露`}
+              />
+              <Form.Description 
+                title="🔥 保存配置"
+                text={`方式1: 快捷键 Cmd+Shift+S\n方式2: 点击右上角 "Actions" 按钮（⌘K）`}
+              />
+              <Form.Description 
+                title=""
+                text={`💾 在Actions面板中，"💾 Save Doubao Config" 按钮位于最顶部，非常显眼！`}
+              />
+            </>
+          ) : (
+            <Form.Description 
+              title="Doubao Configuration"
+              text={`✅ 已配置 - 凭证已安全保存`}
+            />
+          )}
         </>
-      )}
 
-      {/* Groq API Key（仅在选择 Groq 时显示） */}
-      {currentPreferences.aiProvider === "groq" && (
-        <Form.PasswordField
-          id="apiKey"
-          title="Groq API Key"
-          placeholder="Enter your Groq API Key"
-          value={currentPreferences.apiKey || ""}
-          onChange={(value) => handlePreferenceChange("apiKey", value)}
-          isDisabled={recorderState.isRecording}
-        />
-      )}
+
 
       <Form.Separator />
 
@@ -478,15 +588,16 @@ export default function RecordTranscription() {
       />
 
       {/* 上下文预览 */}
-      {currentPreferences.enableContext && highlightedText && (
+      {currentPreferences.enableContext && (
         <>
           <Form.Separator />
           <Form.TextArea
             id="context"
             title="Context"
+            placeholder={highlightedText ? "" : "使用 Cmd+T 将转录结果设为上下文，或手动输入上下文内容，帮助AI更准确理解后续录音内容"}
             value={highlightedText}
-            onChange={() => {}} // Read-only
-            info="This highlighted text will be used as context. It will automatically update when you copy text to the clipboard. You can also manually refresh it by pressing Cmd+U."
+            onChange={(newText) => setHighlightedText(newText)}
+            info="上下文可以帮助AI更准确理解专业术语和连续对话。您可以直接编辑此字段，或点击Actions菜单中的'Set as Context'（Cmd+T）将转录结果设为上下文。"
           />
         </>
       )}

@@ -1,38 +1,51 @@
 import { showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { readFileSync } from "fs";
-import Groq from "groq-sdk";
 import { DoubaoClient } from "./doubao-client";
 import { extractPCMFromWav, getWavInfo } from "../audio";
 import { TranscriptionPreferences, TranscriptionResult } from "../../types";
 import { DEFAULT_PREFERENCES } from "../../constants";
 import { trace, debug, info, warn, error, startTimer } from "../logger";
+import { getDoubaoCredentials } from "../config";
 
 // 获取用户偏好设置
 export function getPreferences(): TranscriptionPreferences {
   const prefs = getPreferenceValues<TranscriptionPreferences>();
+  const doubaoCredentials = getDoubaoCredentials();
 
-  // 临时硬编码豆包凭证（用于测试）
-  // TODO: 在设置界面配置后删除这些硬编码值
-  const defaultsWithCredentials = {
+  console.log("🔧 Transcription: getPreferences called");
+  console.log("🔧 Transcription: Raycast prefs", {
+    hasAppKey: !!prefs.doubaoAppKey,
+    hasAccessToken: !!prefs.doubaoAccessToken,
+    hasSecretKey: !!prefs.doubaoSecretKey,
+    appKeyValue: prefs.doubaoAppKey,
+    accessTokenValue: prefs.doubaoAccessToken,
+    secretKeyValue: prefs.doubaoSecretKey,
+  });
+  console.log("🔧 Transcription: Local credentials", {
+    hasCredentials: !!doubaoCredentials,
+    hasAppKey: !!doubaoCredentials?.appKey,
+    hasAccessToken: !!doubaoCredentials?.accessToken,
+    hasSecretKey: !!doubaoCredentials?.secretKey,
+    appKeyValue: doubaoCredentials?.appKey,
+    accessTokenValue: doubaoCredentials?.accessToken,
+    secretKeyValue: doubaoCredentials?.secretKey,
+  });
+
+  // 优先使用Raycast preferences中的配置，如果为空则使用本地保存的配置
+  const mergedPrefs = {
     ...DEFAULT_PREFERENCES,
-    doubaoAppKey: "2099456436",
-    doubaoAccessToken: "Y4muRvrXyAZuqQODGCidZ1mZCxVqQ2sn",
-    doubaoSecretKey: "AH7V1Ekewr4OJTWIkFXJZDFAoY4lZIe5",
+    ...prefs,
+    // 优先使用Raycast preferences，fallback到本地配置
+    doubaoAppKey: prefs.doubaoAppKey || doubaoCredentials?.appKey,
+    doubaoAccessToken: prefs.doubaoAccessToken || doubaoCredentials?.accessToken,
+    doubaoSecretKey: prefs.doubaoSecretKey || doubaoCredentials?.secretKey,
   };
 
-  // 合并顺序调整，确保硬编码的凭证不被空值覆盖
-  const mergedPrefs = { ...defaultsWithCredentials, ...prefs };
-
-  // 如果从偏好设置中没有获取到凭证，使用硬编码的值
-  if (!mergedPrefs.doubaoAppKey) {
-    mergedPrefs.doubaoAppKey = defaultsWithCredentials.doubaoAppKey;
-  }
-  if (!mergedPrefs.doubaoAccessToken) {
-    mergedPrefs.doubaoAccessToken = defaultsWithCredentials.doubaoAccessToken;
-  }
-  if (!mergedPrefs.doubaoSecretKey) {
-    mergedPrefs.doubaoSecretKey = defaultsWithCredentials.doubaoSecretKey;
-  }
+  console.log("🔧 Transcription: Final merged prefs", {
+    doubaoAppKey: mergedPrefs.doubaoAppKey,
+    doubaoAccessToken: mergedPrefs.doubaoAccessToken,
+    doubaoSecretKey: mergedPrefs.doubaoSecretKey,
+  });
 
   return mergedPrefs;
 }
@@ -52,7 +65,7 @@ export async function transcribeAudio(
 
   info("Transcription", "Starting transcription", {
     audioFilePath,
-    provider: preferences.aiProvider,
+    provider: "doubao",
     language: preferences.language,
   });
 
@@ -65,13 +78,8 @@ export async function transcribeAudio(
   const startTime = Date.now();
 
   try {
-    let result: TranscriptionResult;
-
-    if (preferences.aiProvider === "doubao") {
-      result = await transcribeWithDoubao(audioFilePath, preferences);
-    } else {
-      result = await transcribeWithGroq(audioFilePath, preferences);
-    }
+    // 使用豆包进行转写
+    const result = await transcribeWithDoubao(audioFilePath, preferences);
 
     // 添加音频元数据
     if (audioInfo) {
@@ -232,90 +240,7 @@ async function transcribeWithDoubao(
   }
 }
 
-// 使用Groq进行转写
-async function transcribeWithGroq(
-  audioFilePath: string,
-  preferences: TranscriptionPreferences
-): Promise<TranscriptionResult> {
-  const timer = startTimer("Transcription", "transcribeWithGroq");
 
-  if (!preferences.apiKey) {
-    const errMsg = "Groq API key not configured. Please set it in preferences.";
-    error("Transcription", errMsg);
-    throw new Error(errMsg);
-  }
-
-  debug("Transcription", "Using Groq API", {
-    model: preferences.model || "whisper-large-v3",
-    language: preferences.language,
-  });
-
-  const groq = new Groq({ apiKey: preferences.apiKey });
-
-  await showToast({
-    style: Toast.Style.Animated,
-    title: "Transcribing with Groq...",
-  });
-
-  // 准备音频文件流
-  const fileBuffer = readFileSync(audioFilePath);
-  const file = new File([fileBuffer], "audio.wav", { type: "audio/wav" });
-
-  // 构建提示词
-  const prompt = buildPrompt(preferences);
-  if (prompt) {
-    trace("Transcription", "Using prompt", { promptLength: prompt.length });
-  }
-
-  // 调用Groq API
-  debug("Transcription", "Calling Groq API");
-  const transcription = await groq.audio.transcriptions.create({
-    file: file,
-    model: preferences.model || "whisper-large-v3",
-    response_format: "verbose_json",
-    language: preferences.language !== "auto" ? preferences.language : undefined,
-    prompt: prompt,
-  });
-
-  info("Transcription", "Groq transcription completed", {
-    text: transcription.text?.substring(0, 100) + "...",
-    language: transcription.language,
-  });
-
-  await showToast({
-    style: Toast.Style.Success,
-    title: "Transcription completed",
-  });
-
-  return {
-    text: transcription.text || "",
-    timestamp: Date.now(),
-    audioFilePath: preferences.saveAudioFiles ? audioFilePath : undefined,
-    metadata: {
-      provider: "groq",
-      model: preferences.model || "whisper-large-v3",
-      language: transcription.language,
-    },
-  };
-
-  timer();
-  return result;
-}
-
-// 构建提示词
-function buildPrompt(preferences: TranscriptionPreferences): string {
-  const parts: string[] = [];
-
-  if (preferences.promptText) {
-    parts.push(preferences.promptText);
-  }
-
-  if (preferences.userTerms) {
-    parts.push(`Terms: ${preferences.userTerms}`);
-  }
-
-  return parts.join(" ");
-}
 
 // 后处理文本
 function postProcessText(text: string, preferences: TranscriptionPreferences): string {
