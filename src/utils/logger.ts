@@ -1,7 +1,7 @@
 import { environment, getPreferenceValues } from "@raycast/api";
-import { appendFileSync, existsSync, unlinkSync } from "fs";
+import { appendFileSync, existsSync, unlinkSync, mkdirSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
+import { tmpdir } from "os";
 import { TranscriptionPreferences } from "../types";
 
 // 日志级别
@@ -41,39 +41,55 @@ class Logger {
     // 生成会话ID
     this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // 设置日志目录为项目根目录
-    this.logDir = join(homedir(), "Dev/Python/speech-to-text");
-
+    // 设置日志目录为 /tmp
+    this.logDir = "/tmp";
+    
     // 设置固定的日志文件名
     this.currentLogFile = join(this.logDir, "speech-to-text-debug.log");
-
-    // 删除旧的日志文件（如果存在）
-    if (existsSync(this.currentLogFile)) {
-      try {
-        unlinkSync(this.currentLogFile);
-      } catch (error) {
-        console.error("Failed to delete old log file:", error);
-      }
-    }
 
     // 从用户preference获取配置
     this.config = this.loadLoggerConfig();
 
-    // 只有在启用日志时才记录启动信息
-    if (this.config.logToFile || this.config.logToConsole) {
-      this.info("=".repeat(80));
-      this.info(`Speech to Text Plugin Started - Session: ${this.sessionId}`);
-      this.info(`Environment: ${environment.isDevelopment ? "Development" : "Production"}`);
-      this.info(`Logging Enabled: ${this.shouldLogAnything()}`);
-      this.info(`Log Level: ${this.config.level}`);
-      this.info(`Log to File: ${this.config.logToFile}`);
-      this.info(`Log to Console: ${this.config.logToConsole}`);
-      this.info(`Log File: ${this.currentLogFile}`);
-      this.info("=".repeat(80));
+    // 只有在启用日志且debug模式时才创建日志文件
+    if (this.shouldLogAnything() && this.shouldCreateLogFile()) {
+      // 清空旧的日志文件（重新开始）
+      if (existsSync(this.currentLogFile)) {
+        try {
+          unlinkSync(this.currentLogFile);
+        } catch (error) {
+          console.error("Failed to clear old log file:", error);
+        }
+      }
+
+      // 记录启动信息
+      this.info("Logger", "=".repeat(80));
+      this.info("Logger", `Speech to Text Plugin Started - Session: ${this.sessionId}`);
+      this.info("Logger", `Environment: ${environment.isDevelopment ? "Development" : "Production"}`);
+      this.info("Logger", `Debug Mode: ${this.shouldCreateLogFile()}`);
+      this.info("Logger", `Logging Enabled: ${this.shouldLogAnything()}`);
+      this.info("Logger", `Log Level: ${this.config.level}`);
+      this.info("Logger", `Log to File: ${this.config.logToFile}`);
+      this.info("Logger", `Log to Console: ${this.config.logToConsole}`);
+      this.info("Logger", `Log File: ${this.currentLogFile}`);
+      this.info("Logger", "=".repeat(80));
     }
   }
 
   private loadLoggerConfig(): LoggerConfig {
+    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const isDebugMode = existsSync(debugFlagFile);
+    
+    // 如果是debug模式，强制启用debug配置
+    if (isDebugMode) {
+      return {
+        level: LogLevel.DEBUG,
+        logToFile: true,
+        logToConsole: true,
+        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFiles: 1,
+      };
+    }
+    
     try {
       const prefs = getPreferenceValues<TranscriptionPreferences>();
 
@@ -81,8 +97,8 @@ class Logger {
       const isDevelopment = environment.isDevelopment;
 
       return {
-        level: (prefs.logLevel as LogLevel) || (isDevelopment ? LogLevel.TRACE : LogLevel.INFO),
-        logToFile: prefs.logToFile !== undefined ? prefs.logToFile : true,
+        level: (prefs.logLevel as LogLevel) || (isDevelopment ? LogLevel.INFO : LogLevel.ERROR),
+        logToFile: prefs.logToFile !== undefined ? prefs.logToFile : isDevelopment,
         logToConsole: prefs.logToConsole !== undefined ? prefs.logToConsole : isDevelopment,
         maxFileSize: 50 * 1024 * 1024, // 50MB
         maxFiles: 1,
@@ -92,7 +108,7 @@ class Logger {
       console.warn("Failed to load logger preferences, using defaults:", error);
       return {
         level: environment.isDevelopment ? LogLevel.DEBUG : LogLevel.ERROR,
-        logToFile: true,
+        logToFile: environment.isDevelopment,
         logToConsole: environment.isDevelopment,
         maxFileSize: 50 * 1024 * 1024,
         maxFiles: 1,
@@ -101,6 +117,14 @@ class Logger {
   }
 
   private shouldLogAnything(): boolean {
+    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const isDebugMode = existsSync(debugFlagFile);
+    
+    // debug模式下强制启用日志
+    if (isDebugMode) {
+      return true;
+    }
+    
     try {
       const prefs = getPreferenceValues<TranscriptionPreferences>();
       return prefs.enableLogging !== false; // 默认启用，除非用户明确禁用
@@ -108,6 +132,15 @@ class Logger {
       // 如果无法获取preferences，在开发环境下启用，生产环境下禁用
       return environment.isDevelopment;
     }
+  }
+
+  private shouldCreateLogFile(): boolean {
+    // 检查是否通过debug标志文件启用了debug模式
+    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const isDebugMode = existsSync(debugFlagFile);
+    
+    // 只有在debug模式下才创建日志文件
+    return isDebugMode;
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -126,10 +159,10 @@ class Logger {
   }
 
   private writeToFile(message: string): void {
-    if (!this.config.logToFile) return;
+    if (!this.config.logToFile || !this.shouldCreateLogFile()) return;
 
     try {
-      // 直接追加到文件，不检查大小（因为每次启动都会清空）
+      // 直接追加到文件，不检查大小
       appendFileSync(this.currentLogFile, message + "\n");
     } catch (error) {
       console.error("Failed to write log to file:", error);

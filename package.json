@@ -306,7 +306,8 @@
   },
   "scripts": {
     "build": "ray build",
-    "dev": "ray develop",
+    "dev": "rm -f /tmp/speech-to-text-debug.flag && ray develop",
+    "dev:debug": "echo 'debug' > /tmp/speech-to-text-debug.flag && ray develop",
     "fix-lint": "ray lint --fix",
     "lint": "ray lint",
     "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",

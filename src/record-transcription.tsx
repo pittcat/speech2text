@@ -487,58 +487,71 @@ export default function RecordTranscription() {
     }
   };
 
-  // 新增：保存 DeepSeek 配置
-  const saveDeepSeekConfig = async () => {
-    debug("RecordTranscription", "🔧 Starting to save DeepSeek config", {
-      apiKey: tempDeepSeekConfig.apiKey
-        ? `${tempDeepSeekConfig.apiKey.substring(0, 4)}****`
-        : "empty",
-      model: tempDeepSeekConfig.model,
-      baseUrl: tempDeepSeekConfig.baseUrl,
-    });
+  // 统一的配置保存函数
+  const saveAllConfigurations = async () => {
+    debug("RecordTranscription", "🔧 Starting to save all configurations");
 
-    if (!tempDeepSeekConfig.apiKey || !tempDeepSeekConfig.model || !tempDeepSeekConfig.baseUrl) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Configuration incomplete",
-        message: "Please fill in all DeepSeek credentials",
-      });
-      return;
+    let hasError = false;
+    let savedCount = 0;
+
+    // 保存 Doubao 配置（如果有填写）
+    if (showDoubaoConfig && tempDoubaoConfig.appKey && tempDoubaoConfig.accessToken && tempDoubaoConfig.secretKey) {
+      const doubaoSuccess = saveDoubaoCredentials(
+        tempDoubaoConfig.appKey,
+        tempDoubaoConfig.accessToken,
+        tempDoubaoConfig.secretKey
+      );
+      if (doubaoSuccess) {
+        setShowDoubaoConfig(false);
+        setTempDoubaoConfig({ appKey: "", accessToken: "", secretKey: "" });
+        savedCount++;
+        info("RecordTranscription", "✅ Doubao config saved successfully");
+      } else {
+        hasError = true;
+        error("RecordTranscription", "❌ Failed to save Doubao config");
+      }
     }
 
-    debug("RecordTranscription", "🔧 All fields validated, calling saveDeepSeekCredentials");
-    const success = saveDeepSeekCredentials(
-      tempDeepSeekConfig.apiKey,
-      tempDeepSeekConfig.model,
-      tempDeepSeekConfig.baseUrl
-    );
+    // 保存 DeepSeek 配置（如果有填写）
+    if (showDeepSeekConfig && tempDeepSeekConfig.apiKey && tempDeepSeekConfig.model && tempDeepSeekConfig.baseUrl) {
+      const deepseekSuccess = saveDeepSeekCredentials(
+        tempDeepSeekConfig.apiKey,
+        tempDeepSeekConfig.model,
+        tempDeepSeekConfig.baseUrl
+      );
+      if (deepseekSuccess) {
+        setShowDeepSeekConfig(false);
+        setTempDeepSeekConfig({
+          apiKey: "",
+          model: "deepseek-chat",
+          baseUrl: "https://api.deepseek.com/v1",
+        });
+        savedCount++;
+        info("RecordTranscription", "✅ DeepSeek config saved successfully");
+      } else {
+        hasError = true;
+        error("RecordTranscription", "❌ Failed to save DeepSeek config");
+      }
+    }
 
-    debug("RecordTranscription", "🔧 saveDeepSeekCredentials result", { success });
-
-    if (success) {
-      info("RecordTranscription", "✅ DeepSeek config saved successfully");
-
-      // 更新显示状态
-      setShowDeepSeekConfig(false);
-
-      await showToast({
-        style: Toast.Style.Success,
-        title: "DeepSeek configured",
-        message: "Credentials saved successfully",
-      });
-
-      // 清空临时存储
-      setTempDeepSeekConfig({
-        apiKey: "",
-        model: "deepseek-chat",
-        baseUrl: "https://api.deepseek.com/v1",
-      });
-    } else {
-      error("RecordTranscription", "❌ Failed to save DeepSeek config");
+    // 显示结果
+    if (savedCount === 0) {
       await showToast({
         style: Toast.Style.Failure,
-        title: "Save failed",
-        message: "Could not save DeepSeek configuration",
+        title: "没有可保存的配置",
+        message: "请填写完整的API凭证信息",
+      });
+    } else if (hasError) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "部分配置保存失败",
+        message: `已保存 ${savedCount} 个配置，请检查其他配置`,
+      });
+    } else {
+      await showToast({
+        style: Toast.Style.Success,
+        title: "配置保存成功",
+        message: `已保存 ${savedCount} 个API配置`,
       });
     }
   };
@@ -631,6 +644,24 @@ export default function RecordTranscription() {
     }
   };
 
+  // 新增：编辑 DeepSeek 配置
+  const editDeepSeekConfig = () => {
+    setShowDeepSeekConfig(true);
+  };
+
+  // 新增：删除 DeepSeek 配置
+  const deleteDeepSeekConfig = async () => {
+    const success = clearCredentials("deepseek");
+    if (success) {
+      setShowDeepSeekConfig(true);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Configuration cleared",
+        message: "DeepSeek credentials removed",
+      });
+    }
+  };
+
   return (
     <Form
       navigationTitle={
@@ -651,11 +682,11 @@ export default function RecordTranscription() {
           />
 
           {/* 配置管理操作 */}
-          {showDoubaoConfig === true && (
+          {(showDoubaoConfig || showDeepSeekConfig) && (
             <Action
-              title="💾 Save Doubao Config"
+              title="💾 保存API配置"
               icon={Icon.CheckCircle}
-              onAction={saveDoubaoConfig}
+              onAction={saveAllConfigurations}
               shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
             />
           )}
@@ -691,12 +722,12 @@ export default function RecordTranscription() {
           )}
 
           {/* DeepSeek 配置管理 */}
-          {showDeepSeekConfig === true && (
+          {showDeepSeekConfig !== true && (
             <Action
-              title="💾 Save Deepseek Config"
-              icon={Icon.CheckCircle}
-              onAction={saveDeepSeekConfig}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+              title="Edit DeepSeek Config"
+              icon={Icon.Gear}
+              onAction={editDeepSeekConfig}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "e" }}
             />
           )}
 
@@ -831,24 +862,68 @@ export default function RecordTranscription() {
               isDisabled={recorderState.isRecording}
             />
             <Form.Description title="" text={`💡 配置保存后将不再显示这些字段，避免密码泄露`} />
-            <Form.Description
-              title="🔥 保存配置"
-              text={`方式1: 快捷键 Cmd+Shift+S\n方式2: 点击右上角 "Actions" 按钮（⌘K）`}
-            />
-            <Form.Description
-              title=""
-              text={`💾 在Actions面板中，"💾 Save Doubao Config" 按钮位于最顶部，非常显眼！`}
-            />
           </>
         ) : (
           <Form.Description title="Doubao Configuration" text={`✅ 已配置 - 凭证已安全保存`} />
         )}
       </>
 
+      {/* 统一的保存配置提示 */}
+      {(showDoubaoConfig || showDeepSeekConfig) && (
+        <>
+          <Form.Separator />
+          <Form.Description
+            title="🔥 保存API配置"
+            text={`方式1: 快捷键 Cmd+Shift+S\n方式2: 点击右上角 "Actions" 按钮（⌘K）`}
+          />
+          <Form.Description
+            title=""
+            text={`💾 在Actions面板中，"💾 保存API配置" 按钮会同时保存所有填写的配置！`}
+          />
+        </>
+      )}
+
       <Form.Separator />
 
       {/* DeepSeek 润色设置 */}
       <Form.Description title="DeepSeek Polish Settings" text="文本润色和优化设置" />
+
+      {/* DeepSeek 配置 */}
+      <>
+        {showDeepSeekConfig ? (
+          <>
+            <Form.TextField
+              id="deepseekApiKey"
+              title="DeepSeek API Key"
+              placeholder="Enter your DeepSeek API Key"
+              value={tempDeepSeekConfig.apiKey}
+              onChange={(value) => setTempDeepSeekConfig((prev) => ({ ...prev, apiKey: value }))}
+              isDisabled={recorderState.isRecording}
+            />
+            <Form.TextField
+              id="deepseekModel"
+              title="DeepSeek Model"
+              placeholder="deepseek-chat"
+              value={tempDeepSeekConfig.model}
+              onChange={(value) => setTempDeepSeekConfig((prev) => ({ ...prev, model: value }))}
+              isDisabled={recorderState.isRecording}
+            />
+            <Form.TextField
+              id="deepseekBaseUrl"
+              title="DeepSeek Base URL"
+              placeholder="https://api.deepseek.com/v1"
+              value={tempDeepSeekConfig.baseUrl}
+              onChange={(value) => setTempDeepSeekConfig((prev) => ({ ...prev, baseUrl: value }))}
+              isDisabled={recorderState.isRecording}
+            />
+            <Form.Description title="" text={`💡 配置保存后将不再显示这些字段，避免密码泄露`} />
+          </>
+        ) : (
+          <Form.Description title="DeepSeek Configuration" text={`✅ 已配置 - 凭证已安全保存`} />
+        )}
+      </>
+
+      <Form.Separator />
 
       <Form.Dropdown
         id="polishTemplate"

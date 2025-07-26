@@ -12,14 +12,58 @@
 - 📋 **历史记录** - 保存和管理所有转写记录
 - 🔄 **重新转写** - 使用不同设置重新处理音频
 - 📊 **统计分析** - 查看使用统计和趋势
+- 💾 **统一配置管理** - 一键保存所有API配置，避免重复输入
+- 🎨 **稳定UI体验** - 固定布局设计，消除页面抖动
 
 ## 安装
+
+### 系统要求
+
+- macOS 10.15+ 
+- [Raycast](https://raycast.com/) 1.50.0+
+- [Sox](https://sox.sourceforge.net/) 音频处理工具
+
+### 安装Sox
+```bash
+# 使用 Homebrew 安装 Sox
+brew install sox
+```
+
+### 插件安装
 
 1. 克隆仓库到本地
 2. 进入插件目录：`cd speech-to-text`
 3. 安装依赖：`npm install`
 4. 构建插件：`npm run build`
 5. 导入到 Raycast：`npm run publish`
+
+## 开发和调试
+
+### 开发命令
+
+```bash
+# 正常开发模式（无调试日志）
+npm run dev
+
+# Debug模式（生成详细调试日志）
+npm run dev:debug
+
+# 构建生产版本
+npm run build
+
+# 代码检查和修复
+npm run lint
+npm run fix-lint
+```
+
+### 统一配置管理
+
+插件现在支持统一的API配置管理：
+
+- **一键保存**: 使用 `Cmd+Shift+S` 或 Actions 面板的"💾 保存API配置"
+- **智能检测**: 自动保存所有填写完整的配置（Doubao + DeepSeek）
+- **状态提示**: 清晰显示保存结果和数量
+- **安全存储**: 配置保存后隐藏表单，避免密码泄露
 
 ## 配置
 
@@ -108,15 +152,34 @@ React.js, TypeScript, GraphQL, Kubernetes
    - `Log to File` - 保存到日志文件（推荐）
    - `Log to Console` - 在控制台显示
 
+### Debug模式详解
+
+**开启Debug模式:**
+```bash
+# 正常开发（无日志文件）
+npm run dev
+
+# Debug开发（生成详细调试日志）
+npm run dev:debug
+```
+
 **日志文件位置:**
+```bash
+# Debug模式下的固定日志文件（仅在debug模式下生成）
+/tmp/speech-to-text-debug.log
 ```
-/Users/你的用户名/Dev/Python/speech-to-text/speech-to-text-debug.log
-```
+
+**特点:**
+- ✅ **按需生成**: 只有debug模式才会创建日志文件
+- ✅ **固定路径**: 日志文件路径固定，便于查找
+- ✅ **自动清理**: 每次启动debug模式自动清空旧日志
+- ✅ **详细记录**: 包含完整的启动信息、配置状态、API调用等
 
 **查看日志的方法:**
 1. **插件内查看**: 在 Raycast 中搜索 "View Plugin Logs"
-2. **文件查看**: 直接打开日志文件
-3. **终端查看**: `tail -f ~/Dev/Python/speech-to-text/speech-to-text-debug.log`
+2. **文件查看**: 直接打开 `/tmp/speech-to-text-debug.log`
+3. **实时监控**: `tail -f /tmp/speech-to-text-debug.log`
+4. **快速检查**: `head -20 /tmp/speech-to-text-debug.log`
 
 ### 📊 日志级别说明
 

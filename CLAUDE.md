@@ -11,6 +11,7 @@ This is a Raycast extension for speech-to-text transcription that uses Doubao (B
 ```bash
 # Development and testing
 npm run dev          # Start development mode with hot reload in Raycast
+npm run dev:debug    # Start development with debug logging enabled (logs to /tmp)
 npm run build        # Build the extension for production
 npm run lint         # Run ESLint code checks
 npm run fix-lint     # Auto-fix ESLint issues
@@ -22,7 +23,7 @@ node test-doubao-client.js
 
 ## Important Files and Paths
 
-- **Log File**: `/Users/pittcat/Dev/Python/speech-to-text/speech-to-text-debug.log` - Automatically cleared on each startup
+- **Debug Log File**: `/tmp/speech-to-text-debug.log` - Only created when using `npm run dev:debug`
 - **Debug Guide**: See `DEBUG-GUIDE.md` for detailed debugging instructions
 - **Development Guide**: See `DEVELOPMENT.md` for technical implementation details
 
@@ -104,3 +105,22 @@ node test-doubao-client.js
 - Requires DEEPSEEK_API_KEY in Raycast preferences
 - Uses REST API for text processing and polishing features
 - Supports multiple models: deepseek-chat, deepseek-coder
+
+## Common Development Tasks
+
+### Running a Single Test
+Since there's no formal test framework, test individual components by:
+- Running the specific command in Raycast development mode: `npm run dev`
+- Using the standalone test script for API connectivity: `node test-doubao-client.js`
+- Creating temporary test files to isolate component behavior
+
+### Debugging WebSocket Issues
+- Enable debug logging in `utils/logger.ts` by setting log level
+- View real-time logs through the built-in log viewer (`view-logs.tsx`)
+- Check WebSocket frame structure in `utils/ai/doubao-client.ts`
+
+### Adding New Text Processing Features
+1. Add new action type in `utils/ai/deepseek-client.ts`
+2. Create prompt template in `utils/prompt-manager.ts`
+3. Update UI in `record-transcription.tsx` to include new action
+4. Test with different model configurations
