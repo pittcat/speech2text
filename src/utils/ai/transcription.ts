@@ -5,15 +5,16 @@ import { extractPCMFromWav, getWavInfo } from "../audio";
 import { TranscriptionPreferences, TranscriptionResult } from "../../types";
 import { DEFAULT_PREFERENCES } from "../../constants";
 import { trace, debug, info, warn, error, startTimer } from "../logger";
-import { getDoubaoCredentials } from "../config";
+import { getDoubaoCredentials, getDeepSeekCredentials } from "../config";
 
 // 获取用户偏好设置
 export function getPreferences(): TranscriptionPreferences {
   const prefs = getPreferenceValues<TranscriptionPreferences>();
   const doubaoCredentials = getDoubaoCredentials();
+  const deepseekCredentials = getDeepSeekCredentials();
 
   console.log("🔧 Transcription: getPreferences called");
-  console.log("🔧 Transcription: Raycast prefs", {
+  console.log("🔧 Transcription: Raw Raycast prefs - Doubao", {
     hasAppKey: !!prefs.doubaoAppKey,
     hasAccessToken: !!prefs.doubaoAccessToken,
     hasSecretKey: !!prefs.doubaoSecretKey,
@@ -21,30 +22,53 @@ export function getPreferences(): TranscriptionPreferences {
     accessTokenValue: prefs.doubaoAccessToken,
     secretKeyValue: prefs.doubaoSecretKey,
   });
+
+  console.log("🔧 Transcription: Raw Raycast prefs - DeepSeek", {
+    hasApiKey: !!prefs.deepseekApiKey,
+    hasModel: !!prefs.deepseekModel,
+    hasBaseUrl: !!prefs.deepseekBaseUrl,
+    hasPolishPrompt: !!prefs.polishPrompt,
+    apiKeyValue: prefs.deepseekApiKey ? `${prefs.deepseekApiKey.substring(0, 4)}****` : "UNDEFINED",
+    modelValue: prefs.deepseekModel,
+    baseUrlValue: prefs.deepseekBaseUrl,
+    enablePolishing: prefs.enablePolishing,
+    polishingTask: prefs.polishingTask,
+  });
+
   console.log("🔧 Transcription: Local credentials", {
-    hasCredentials: !!doubaoCredentials,
-    hasAppKey: !!doubaoCredentials?.appKey,
-    hasAccessToken: !!doubaoCredentials?.accessToken,
-    hasSecretKey: !!doubaoCredentials?.secretKey,
-    appKeyValue: doubaoCredentials?.appKey,
-    accessTokenValue: doubaoCredentials?.accessToken,
-    secretKeyValue: doubaoCredentials?.secretKey,
+    hasDoubaoCredentials: !!doubaoCredentials,
+    hasDeepSeekCredentials: !!deepseekCredentials,
+    doubaoAppKey: doubaoCredentials?.appKey,
+    doubaoAccessToken: doubaoCredentials?.accessToken,
+    doubaoSecretKey: doubaoCredentials?.secretKey,
+    deepseekApiKey: deepseekCredentials?.apiKey ? `${deepseekCredentials.apiKey.substring(0, 4)}****` : "NONE",
+    deepseekModel: deepseekCredentials?.model,
+    deepseekBaseUrl: deepseekCredentials?.baseUrl,
   });
 
   // 优先使用Raycast preferences中的配置，如果为空则使用本地保存的配置
   const mergedPrefs = {
     ...DEFAULT_PREFERENCES,
     ...prefs,
-    // 优先使用Raycast preferences，fallback到本地配置
+    // 豆包配置：优先使用Raycast preferences，fallback到本地配置
     doubaoAppKey: prefs.doubaoAppKey || doubaoCredentials?.appKey,
     doubaoAccessToken: prefs.doubaoAccessToken || doubaoCredentials?.accessToken,
     doubaoSecretKey: prefs.doubaoSecretKey || doubaoCredentials?.secretKey,
+    // DeepSeek配置：优先使用Raycast preferences，fallback到本地配置
+    deepseekApiKey: prefs.deepseekApiKey || deepseekCredentials?.apiKey,
+    deepseekModel: prefs.deepseekModel || deepseekCredentials?.model || "deepseek-chat",
+    deepseekBaseUrl: prefs.deepseekBaseUrl || deepseekCredentials?.baseUrl || "https://api.deepseek.com/v1",
   };
 
   console.log("🔧 Transcription: Final merged prefs", {
     doubaoAppKey: mergedPrefs.doubaoAppKey,
     doubaoAccessToken: mergedPrefs.doubaoAccessToken,
     doubaoSecretKey: mergedPrefs.doubaoSecretKey,
+    deepseekApiKey: mergedPrefs.deepseekApiKey ? `${mergedPrefs.deepseekApiKey.substring(0, 4)}****` : "NONE",
+    deepseekModel: mergedPrefs.deepseekModel,
+    deepseekBaseUrl: mergedPrefs.deepseekBaseUrl,
+    enablePolishing: mergedPrefs.enablePolishing,
+    polishingTask: mergedPrefs.polishingTask,
   });
 
   return mergedPrefs;
@@ -182,11 +206,28 @@ async function transcribeWithDoubao(
       error("Transcription", "DoubaoClient error event", err);
     });
 
+    // 获取音频信息用于动态超时计算
+    const audioInfo = getWavInfo(audioFilePath);
+    const audioDuration = audioInfo?.duration || 30; // 默认30秒，如果无法获取音频信息
+
+    // 根据音频长度动态计算超时时间
+    // 基础超时：60秒，额外时间：音频长度 * 2 + 网络缓冲30秒
+    const baseTimeout = 60000; // 60秒基础超时
+    const audioLengthMs = audioDuration * 1000; // 音频长度转为毫秒
+    const dynamicTimeout = baseTimeout + (audioLengthMs * 2) + 30000; // 音频长度*2 + 30秒缓冲
+    const timeoutSeconds = Math.round(dynamicTimeout / 1000);
+
+    debug("Transcription", "Timeout calculation", { 
+      audioDuration, 
+      timeoutMs: dynamicTimeout, 
+      timeoutSeconds 
+    });
+
     // 创建一个 Promise 来等待最终结果（模仿 Python 的并发模式）
     const finalResultPromise = new Promise<string>((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error("Transcription timeout after 30 seconds"));
-      }, 30000);
+        reject(new Error(`Transcription timeout after ${timeoutSeconds} seconds (audio: ${audioDuration}s)`));
+      }, dynamicTimeout);
 
       client.once("final", (text: string) => {
         clearTimeout(timeout);

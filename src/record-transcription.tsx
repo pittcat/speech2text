@@ -13,7 +13,14 @@ import { useAudioRecorder } from "./hooks/useAudioRecorder";
 import { transcribeAudio, getPreferences } from "./utils/ai/transcription";
 import { addToHistory } from "./utils/history";
 import { deleteAudioFile } from "./utils/audio";
-import { TranscriptionPreferences, TranscriptionResult } from "./types";
+import { 
+  TranscriptionPreferences, 
+  TranscriptionResult, 
+  PolishingResult,
+  TextProcessingTask,
+  PromptOption,
+  CustomPrompt
+} from "./types";
 import { SUPPORTED_LANGUAGES } from "./constants";
 import { logger, trace, debug, info, warn, error } from "./utils/logger";
 import TranscriptionHistory from "./transcription-history";
@@ -22,20 +29,38 @@ import {
   saveDoubaoCredentials,
   clearCredentials,
   syncConfigurationState,
+  isDeepSeekConfigured,
+  saveDeepSeekCredentials,
+  getDeepSeekConfig,
 } from "./utils/config";
+import { DeepSeekClient, createDeepSeekClient, validateDeepSeekConfig } from "./utils/ai/deepseek-client";
+import { 
+  getAllAvailablePrompts, 
+  findPromptById, 
+  addCustomPrompt, 
+  validateCustomPrompt,
+  getPromptContent 
+} from "./utils/prompt-manager";
 
 export default function RecordTranscription() {
   const { push } = useNavigation();
   const preferences = getPreferences();
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // 新增：润色处理状态
+  const [isPolishing, setIsPolishing] = useState(false);
+  
   const [currentPreferences, setCurrentPreferences] =
     useState<TranscriptionPreferences>(preferences);
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
+  // 新增：润色结果状态
+  const [polishingResult, setPolishingResult] = useState<PolishingResult | null>(null);
   const [highlightedText, setHighlightedText] = useState<string>("");
 
   // 配置编辑状态 - 使用更安全的初始化
   const [showDoubaoConfig, setShowDoubaoConfig] = useState(true); // 默认显示配置表单
+  // 新增：DeepSeek 配置状态
+  const [showDeepSeekConfig, setShowDeepSeekConfig] = useState(false);
   
   // 临时配置存储（编辑时使用）
   const [tempDoubaoConfig, setTempDoubaoConfig] = useState({
@@ -43,6 +68,29 @@ export default function RecordTranscription() {
     accessToken: "",
     secretKey: "",
   });
+
+  // 新增：DeepSeek 临时配置
+  const [tempDeepSeekConfig, setTempDeepSeekConfig] = useState({
+    apiKey: "",
+    model: "deepseek-chat",
+    baseUrl: "https://api.deepseek.com/v1",
+  });
+
+  // 新增：润色任务选择
+  const [selectedTask, setSelectedTask] = useState<TextProcessingTask>("润色");
+  
+  // 新增：润色提示词管理
+  const [availablePrompts, setAvailablePrompts] = useState<PromptOption[]>([]);
+  const [selectedPromptId, setSelectedPromptId] = useState<string>("general");
+  const [showCustomPromptModal, setShowCustomPromptModal] = useState(false);
+  const [newPromptName, setNewPromptName] = useState("");
+  const [newPromptContent, setNewPromptContent] = useState("");
+
+  // 初始化可用的润色提示词
+  useEffect(() => {
+    const prompts = getAllAvailablePrompts();
+    setAvailablePrompts(prompts);
+  }, [showCustomPromptModal]); // 当自定义提示词弹窗关闭时刷新
 
   // 记录组件初始化
   useEffect(() => {
@@ -56,33 +104,44 @@ export default function RecordTranscription() {
       
       // 重新检查配置状态
       debug("RecordTranscription", "🔧 Checking configuration status");
-      const isConfigured = isDoubaoConfigured();
-      const shouldShowConfig = !isConfigured;
+      const isDoubaoConfigured_ = isDoubaoConfigured();
+      const isDeepSeekConfigured_ = isDeepSeekConfigured();
+      const shouldShowDoubaoConfig = !isDoubaoConfigured_;
+      const shouldShowDeepSeekConfig = !isDeepSeekConfigured_;
       
       debug("RecordTranscription", "🔧 Configuration status check", {
-        isDoubaoConfigured: isConfigured,
+        isDoubaoConfigured: isDoubaoConfigured_,
+        isDeepSeekConfigured: isDeepSeekConfigured_,
         currentShowDoubaoConfig: showDoubaoConfig,
-        willSetShowDoubaoConfigTo: shouldShowConfig,
+        currentShowDeepSeekConfig: showDeepSeekConfig,
+        willSetShowDoubaoConfigTo: shouldShowDoubaoConfig,
+        willSetShowDeepSeekConfigTo: shouldShowDeepSeekConfig,
       });
       
-      setShowDoubaoConfig(shouldShowConfig);
+      setShowDoubaoConfig(shouldShowDoubaoConfig);
+      setShowDeepSeekConfig(shouldShowDeepSeekConfig);
       
       info("RecordTranscription", "Component initialized", {
         preferences: currentPreferences,
-        isDoubaoConfigured: isConfigured,
-        showDoubaoConfig: shouldShowConfig,
+        isDoubaoConfigured: isDoubaoConfigured_,
+        isDeepSeekConfigured: isDeepSeekConfigured_,
+        showDoubaoConfig: shouldShowDoubaoConfig,
+        showDeepSeekConfig: shouldShowDeepSeekConfig,
         logFile: logger.getLogFilePath(),
       });
       
       // 添加调试日志
       console.log("🐛 DEBUG: All preferences:", currentPreferences);
-      console.log("🐛 DEBUG: Is Doubao configured:", isConfigured);
-      console.log("🐛 DEBUG: Show config form:", shouldShowConfig);
+      console.log("🐛 DEBUG: Is Doubao configured:", isDoubaoConfigured_);
+      console.log("🐛 DEBUG: Is DeepSeek configured:", isDeepSeekConfigured_);
+      console.log("🐛 DEBUG: Show Doubao config form:", shouldShowDoubaoConfig);
+      console.log("🐛 DEBUG: Show DeepSeek config form:", shouldShowDeepSeekConfig);
     } catch (error) {
       error("RecordTranscription", "Component initialization failed", error);
       console.error("🐛 DEBUG: Component initialization error:", error);
       // 确保组件仍能正常工作
       setShowDoubaoConfig(true);
+      setShowDeepSeekConfig(true);
     }
   }, []);
 
@@ -301,6 +360,207 @@ export default function RecordTranscription() {
     }
   };
 
+  // 处理润色模板选择
+  const handleTemplateChange = (value: string) => {
+    if (value === "__add_custom__") {
+      setShowCustomPromptModal(true);
+    } else {
+      setSelectedPromptId(value);
+    }
+  };
+
+  // 添加自定义提示词
+  const handleAddCustomPrompt = async () => {
+    const validation = validateCustomPrompt(newPromptName, newPromptContent);
+    if (!validation.valid) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Invalid input",
+        message: validation.error,
+      });
+      return;
+    }
+
+    const newPrompt = addCustomPrompt(newPromptName, newPromptContent);
+    if (newPrompt) {
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Custom prompt added",
+        message: `"${newPromptName}" has been added`,
+      });
+      setSelectedPromptId(newPrompt.id);
+      setShowCustomPromptModal(false);
+      setNewPromptName("");
+      setNewPromptContent("");
+    } else {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to add prompt",
+        message: "Name already exists or save failed",
+      });
+    }
+  };
+
+  // 新增：处理文本润色
+  const handlePolishText = async () => {
+    if (!transcriptionResult?.text) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "No text to polish",
+        message: "Please transcribe some audio first",
+      });
+      return;
+    }
+
+    if (isPolishing) {
+      debug("RecordTranscription", "Already polishing, ignoring duplicate trigger");
+      return;
+    }
+
+    setIsPolishing(true);
+    const timer = logger.startTimer("RecordTranscription", "handlePolishText");
+
+    try {
+      debug("RecordTranscription", "Starting text polishing", {
+        task: selectedTask,
+        textLength: transcriptionResult.text.length,
+      });
+
+      const deepseekConfig = getDeepSeekConfig();
+      if (!deepseekConfig) {
+        throw new Error("DeepSeek not configured. Please configure DeepSeek API first.");
+      }
+
+      const client = createDeepSeekClient(deepseekConfig);
+      
+      // 获取选中的提示词内容
+      const selectedPrompt = findPromptById(selectedPromptId);
+      const customPrompt = selectedPrompt ? getPromptContent(selectedPrompt) : undefined;
+
+      const result = await client.processText(transcriptionResult.text, {
+        task: selectedTask,
+        customPrompt,
+        temperature: 0.7,
+        maxTokens: 2000,
+      });
+
+      info("RecordTranscription", "Text polishing completed", {
+        task: selectedTask,
+        originalLength: result.originalText.length,
+        polishedLength: result.polishedText.length,
+        model: result.model,
+      });
+
+      setPolishingResult(result);
+
+      // 复制润色后的文本到剪贴板
+      await Clipboard.copy(result.polishedText);
+
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Text polished successfully",
+        message: "Polished text copied to clipboard",
+      });
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      error("RecordTranscription", "Text polishing failed", { error: errorMessage });
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Polishing failed",
+        message: errorMessage,
+      });
+    } finally {
+      setIsPolishing(false);
+      timer();
+    }
+  };
+
+  // 新增：保存 DeepSeek 配置
+  const saveDeepSeekConfig = async () => {
+    debug("RecordTranscription", "🔧 Starting to save DeepSeek config", {
+      apiKey: tempDeepSeekConfig.apiKey ? `${tempDeepSeekConfig.apiKey.substring(0, 4)}****` : "empty",
+      model: tempDeepSeekConfig.model,
+      baseUrl: tempDeepSeekConfig.baseUrl,
+    });
+
+    if (!tempDeepSeekConfig.apiKey || !tempDeepSeekConfig.model || !tempDeepSeekConfig.baseUrl) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Configuration incomplete",
+        message: "Please fill in all DeepSeek credentials",
+      });
+      return;
+    }
+
+    debug("RecordTranscription", "🔧 All fields validated, calling saveDeepSeekCredentials");
+    const success = saveDeepSeekCredentials(
+      tempDeepSeekConfig.apiKey,
+      tempDeepSeekConfig.model,
+      tempDeepSeekConfig.baseUrl
+    );
+
+    debug("RecordTranscription", "🔧 saveDeepSeekCredentials result", { success });
+
+    if (success) {
+      info("RecordTranscription", "✅ DeepSeek config saved successfully");
+      
+      // 更新显示状态
+      setShowDeepSeekConfig(false);
+      
+      await showToast({
+        style: Toast.Style.Success,
+        title: "DeepSeek configured",
+        message: "Credentials saved successfully",
+      });
+      
+      // 清空临时存储
+      setTempDeepSeekConfig({ 
+        apiKey: "", 
+        model: "deepseek-chat", 
+        baseUrl: "https://api.deepseek.com/v1" 
+      });
+      
+    } else {
+      error("RecordTranscription", "❌ Failed to save DeepSeek config");
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Save failed",
+        message: "Could not save DeepSeek configuration",
+      });
+    }
+  };
+
+  // 新增：测试 DeepSeek 连接
+  const testDeepSeekConnection = async () => {
+    try {
+      const deepseekConfig = getDeepSeekConfig();
+      if (!deepseekConfig) {
+        throw new Error("DeepSeek not configured");
+      }
+
+      const client = createDeepSeekClient(deepseekConfig);
+      const success = await client.testConnection();
+
+      if (success) {
+        await showToast({
+          style: Toast.Style.Success,
+          title: "Connection successful",
+          message: "DeepSeek API is working properly",
+        });
+      } else {
+        throw new Error("Connection test failed");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Connection failed",
+        message: errorMessage,
+      });
+    }
+  };
+
   // 保存豆包配置
   const saveDoubaoConfig = async () => {
     debug("RecordTranscription", "🔧 Starting to save Doubao config", {
@@ -310,11 +570,12 @@ export default function RecordTranscription() {
     });
 
     if (!tempDoubaoConfig.appKey || !tempDoubaoConfig.accessToken || !tempDoubaoConfig.secretKey) {
-      error("RecordTranscription", "Configuration incomplete - missing fields", {
+      const errorObj = {
         hasAppKey: !!tempDoubaoConfig.appKey,
         hasAccessToken: !!tempDoubaoConfig.accessToken,
         hasSecretKey: !!tempDoubaoConfig.secretKey,
-      });
+      };
+      error("RecordTranscription", "Configuration incomplete - missing fields", errorObj);
       await showToast({
         style: Toast.Style.Failure,
         title: "Configuration incomplete",
@@ -389,7 +650,11 @@ export default function RecordTranscription() {
   return (
     <Form
       navigationTitle={
-        recorderState.isRecording ? "Recording... Press Enter to stop" : "Speech to Text - Press Enter to start"
+        recorderState.isRecording 
+          ? "Recording... Press Enter to stop" 
+          : isPolishing 
+            ? "Polishing with DeepSeek..." 
+            : "Speech to Text - Press Enter to start"
       }
       actions={
         <ActionPanel>
@@ -430,6 +695,14 @@ export default function RecordTranscription() {
                 shortcut={{ modifiers: ["cmd"], key: "c" }}
               />
               
+                             {/* 新增：润色功能 */}
+               <Action
+                 title={isPolishing ? "Polishing..." : `Polish with DeepSeek (${selectedTask})`}
+                 icon={isPolishing ? Icon.Clock : Icon.Wand}
+                 onAction={handlePolishText}
+                 shortcut={{ modifiers: ["cmd"], key: "p" }}
+               />
+              
               {currentPreferences?.enableContext && (
                 <Action
                   title="Set as Context"
@@ -439,6 +712,35 @@ export default function RecordTranscription() {
                 />
               )}
             </>
+          )}
+
+          {/* DeepSeek 配置管理 */}
+          {showDeepSeekConfig === true && (
+            <Action
+              title="💾 Save DeepSeek Config"
+              icon={Icon.CheckCircle}
+              onAction={saveDeepSeekConfig}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+            />
+          )}
+          
+          {showDeepSeekConfig !== true && isDeepSeekConfigured() && (
+            <Action
+              title="Test DeepSeek Connection"
+              icon={Icon.Network}
+              onAction={testDeepSeekConnection}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "t" }}
+            />
+          )}
+
+          {/* 润色结果操作 */}
+          {polishingResult?.polishedText && (
+            <Action
+              title="Copy Polished Text"
+              icon={Icon.Stars}
+              onAction={() => Clipboard.copy(polishingResult.polishedText)}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            />
           )}
           
           <Action
@@ -459,6 +761,14 @@ export default function RecordTranscription() {
         />
       )}
 
+      {/* 润色状态 */}
+      {isPolishing && (
+        <Form.Description
+          title="Polishing"
+          text={`✨ Processing with DeepSeek ${selectedTask}... Please wait`}
+        />
+      )}
+
       {/* 转写结果 */}
       {transcriptionResult && (
         <Form.TextArea
@@ -473,6 +783,35 @@ export default function RecordTranscription() {
           }}
           info="您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。"
         />
+      )}
+
+      {/* 新增：润色结果展示 */}
+      {polishingResult && (
+        <>
+          <Form.Separator />
+          <Form.TextArea
+            id="polished"
+            title={`Polished Result (${polishingResult.task})`}
+            value={polishingResult.polishedText}
+            onChange={(newText) => {
+              setPolishingResult({
+                ...polishingResult,
+                polishedText: newText
+              });
+            }}
+            info={`DeepSeek ${polishingResult.model} 润色结果。您可以继续编辑。`}
+          />
+          <Form.Description
+            title="Processing Info"
+            text={`Model: ${polishingResult.model} | Task: ${polishingResult.task} | 
+                   Original: ${polishingResult.originalText.length} chars | 
+                   Polished: ${polishingResult.polishedText.length} chars${
+                     polishingResult.metadata?.usage 
+                       ? ` | Tokens: ${polishingResult.metadata.usage.totalTokens}`
+                       : ''
+                   }`}
+          />
+        </>
       )}
 
       <Form.Separator />
@@ -551,56 +890,47 @@ export default function RecordTranscription() {
 
       <Form.Separator />
 
-      {/* 高级选项 */}
-      <Form.TextField
-        id="promptText"
-        title="Custom Prompt"
-        placeholder="Enter instructions for the AI transcription"
-        value={currentPreferences.promptText || ""}
-        onChange={(value) => handlePreferenceChange("promptText", value)}
-        isDisabled={recorderState.isRecording}
+      {/* DeepSeek 润色设置 */}
+      <Form.Description
+        title="DeepSeek Polish Settings"
+        text="文本润色和优化设置"
       />
 
-      <Form.TextField
-        id="userTerms"
-        title="Custom Terms"
-        placeholder="e.g., React.js, TypeScript, GraphQL"
-        value={currentPreferences.userTerms || ""}
-        onChange={(value) => handlePreferenceChange("userTerms", value)}
-        info="Comma-separated list of specialized terms"
-        isDisabled={recorderState.isRecording}
-      />
-
-      <Form.Checkbox
-        id="enableContext"
-        label="Use highlighted text as context"
-        value={currentPreferences.enableContext || false}
-        onChange={(value) => handlePreferenceChange("enableContext", value)}
-        isDisabled={recorderState.isRecording}
-      />
-
-      <Form.Checkbox
-        id="saveAudioFiles"
-        label="Save audio files"
-        value={currentPreferences.saveAudioFiles || true}
-        onChange={(value) => handlePreferenceChange("saveAudioFiles", value)}
-        isDisabled={recorderState.isRecording}
-      />
-
-      {/* 上下文预览 */}
-      {currentPreferences.enableContext && (
-        <>
-          <Form.Separator />
-          <Form.TextArea
-            id="context"
-            title="Context"
-            placeholder={highlightedText ? "" : "使用 Cmd+T 将转录结果设为上下文，或手动输入上下文内容，帮助AI更准确理解后续录音内容"}
-            value={highlightedText}
-            onChange={(newText) => setHighlightedText(newText)}
-            info="上下文可以帮助AI更准确理解专业术语和连续对话。您可以直接编辑此字段，或点击Actions菜单中的'Set as Context'（Cmd+T）将转录结果设为上下文。"
+      <Form.Dropdown
+        id="polishTemplate"
+        title="润色模板"
+        value={selectedPromptId}
+        onChange={handleTemplateChange}
+        isDisabled={recorderState.isRecording || isPolishing}
+      >
+        {availablePrompts.map((prompt) => (
+          <Form.Dropdown.Item
+            key={prompt.isCustom ? prompt.id : prompt.key}
+            value={prompt.isCustom ? prompt.id : prompt.key}
+            title={prompt.name}
           />
-        </>
-      )}
+        ))}
+        <Form.Dropdown.Item
+          value="__add_custom__"
+          title="➕ Add Custom Prompt"
+        />
+      </Form.Dropdown>
+
+      <Form.Dropdown
+        id="polishingTask"
+        title="润色任务"
+        value={selectedTask}
+        onChange={(value) => setSelectedTask(value as TextProcessingTask)}
+        isDisabled={recorderState.isRecording || isPolishing}
+      >
+        <Form.Dropdown.Item value="润色" title="润色 - 优化表达" />
+        <Form.Dropdown.Item value="改写" title="改写 - 重新表达" />
+        <Form.Dropdown.Item value="纠错" title="纠错 - 修正错误" />
+        <Form.Dropdown.Item value="扩写" title="扩写 - 增加内容" />
+        <Form.Dropdown.Item value="缩写" title="缩写 - 精简内容" />
+        <Form.Dropdown.Item value="翻译" title="翻译 - 中英互译" />
+        <Form.Dropdown.Item value="学术润色" title="学术润色 - 学术风格" />
+      </Form.Dropdown>
     </Form>
   );
 }

@@ -138,6 +138,98 @@
       "type": "checkbox",
       "default": true,
       "required": false
+    },
+
+    {
+      "name": "deepseekApiKey",
+      "title": "DeepSeek API Key",
+      "description": "Your DeepSeek API key for text polishing features",
+      "type": "password",
+      "required": false,
+      "placeholder": "Enter your DeepSeek API key"
+    },
+    {
+      "name": "deepseekModel",
+      "title": "DeepSeek Model",
+      "description": "DeepSeek model to use for text processing",
+      "type": "dropdown",
+      "required": false,
+      "default": "deepseek-chat",
+      "data": [
+        {
+          "title": "DeepSeek Chat (Recommended)",
+          "value": "deepseek-chat"
+        },
+        {
+          "title": "DeepSeek Coder",
+          "value": "deepseek-coder"
+        }
+      ]
+    },
+    {
+      "name": "deepseekBaseUrl",
+      "title": "DeepSeek Base URL",
+      "description": "DeepSeek API base URL (use default unless you have a custom endpoint)",
+      "type": "textfield",
+      "required": false,
+      "default": "https://api.deepseek.com/v1",
+      "placeholder": "https://api.deepseek.com/v1"
+    },
+    {
+      "name": "polishPrompt",
+      "title": "Default Polish Prompt",
+      "description": "Custom prompt template for text polishing",
+      "type": "textfield",
+      "required": false,
+      "default": "请润色以下文本，使其更加通顺自然，保持原意不变",
+      "placeholder": "Enter custom instructions for text polishing"
+    },
+    {
+      "name": "enablePolishing",
+      "title": "Enable Text Polishing",
+      "label": "Enable DeepSeek text polishing feature",
+      "description": "Enable the DeepSeek-powered text polishing functionality",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "polishingTask",
+      "title": "Default Polishing Task",
+      "description": "Default task type for text polishing",
+      "type": "dropdown",
+      "required": false,
+      "default": "润色",
+      "data": [
+        {
+          "title": "润色 - Polish text for better readability",
+          "value": "润色"
+        },
+        {
+          "title": "改写 - Rewrite with different expressions",
+          "value": "改写"
+        },
+        {
+          "title": "纠错 - Fix grammar and spelling errors",
+          "value": "纠错"
+        },
+        {
+          "title": "翻译 - Translate to another language",
+          "value": "翻译"
+        },
+        {
+          "title": "扩写 - Expand with more details",
+          "value": "扩写"
+        },
+        {
+          "title": "缩写 - Condense to key points",
+          "value": "缩写"
+        },
+        {
+          "title": "学术润色 - Academic style polishing",
+          "value": "学术润色"
+        }
+      ]
     }
   ],
   "dependencies": {

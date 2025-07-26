@@ -21,7 +21,19 @@ type ExtensionPreferences = {
   /** Custom Terms - Comma-separated list of specialized terms, names, or jargon to help with transcription accuracy */
   "userTerms"?: string,
   /** Use Highlighted Text - Automatically use any text you have highlighted in other apps as context for transcription */
-  "enableContext": boolean
+  "enableContext": boolean,
+  /** DeepSeek API Key - Your DeepSeek API key for text polishing features */
+  "deepseekApiKey"?: string,
+  /** DeepSeek Model - DeepSeek model to use for text processing */
+  "deepseekModel": "deepseek-chat" | "deepseek-coder",
+  /** DeepSeek Base URL - DeepSeek API base URL (use default unless you have a custom endpoint) */
+  "deepseekBaseUrl": string,
+  /** Default Polish Prompt - Custom prompt template for text polishing */
+  "polishPrompt": string,
+  /** Enable Text Polishing - Enable the DeepSeek-powered text polishing functionality */
+  "enablePolishing": boolean,
+  /** Default Polishing Task - Default task type for text polishing */
+  "polishingTask": "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色"
 }
 
 /** Preferences accessible in all the extension's commands */
