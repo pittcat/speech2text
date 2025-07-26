@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Raycast extension for speech-to-text transcription that supports two AI engines: Doubao (ByteDance's AI service) and Groq Whisper. Users can record audio and get text transcriptions with support for multiple languages and custom settings.
+This is a Raycast extension for speech-to-text transcription that uses Doubao (ByteDance's AI service) for voice recognition and integrates DeepSeek for text polishing. Users can record audio and get text transcriptions with support for multiple languages and custom settings.
 
 ## Development Commands
 
@@ -31,17 +31,16 @@ node test-doubao-client.js
 ### Core Components Structure
 - **Main UI Components**: `record-transcription.tsx` (main recording interface), `transcription-history.tsx` (history management), `view-logs.tsx` (debugging interface)
 - **Audio Recording**: `hooks/useAudioRecorder.ts` handles Sox-based 16kHz WAV recording with real-time timing
-- **AI Integration**: `utils/ai/transcription.ts` orchestrates between two AI services, `utils/ai/doubao-client.ts` implements complex WebSocket binary protocol for Doubao
+- **AI Integration**: `utils/ai/transcription.ts` orchestrates speech recognition, `utils/ai/doubao-client.ts` implements complex WebSocket binary protocol for Doubao, `utils/ai/deepseek-client.ts` handles text polishing
 - **Data Management**: `utils/history.ts` manages transcription records, `utils/logger.ts` provides structured logging
 
-### Dual AI Engine Architecture
-- **Doubao Engine**: WebSocket-based binary protocol with real-time streaming, requires complex frame handling and authentication
-- **Groq Engine**: REST API using Whisper model via groq-sdk, simpler HTTP-based integration (Note: Implementation pending)
-- **Service Selection**: Runtime switching between engines based on user preferences
+### AI Services Architecture
+- **Doubao Engine**: WebSocket-based binary protocol with real-time streaming for speech recognition, requires complex frame handling and authentication
+- **DeepSeek Engine**: REST API for text processing and polishing, simpler HTTP-based integration
 
 #### Supported Models
-- **Doubao**: Uses ByteDance's speech recognition service
-- **Groq Whisper**: Supports Whisper Large v3, Whisper Large v3 Turbo, and Distil Whisper models
+- **Doubao**: Uses ByteDance's speech recognition service for voice-to-text conversion
+- **DeepSeek**: Supports deepseek-chat and deepseek-coder models for text polishing and processing
 
 ## Key Technical Details
 
@@ -101,6 +100,7 @@ node test-doubao-client.js
 - Requires app_id, token, and cluster parameters
 - Uses WebSocket connection to wss://openspeech.bytedance.com
 
-### Groq API
-- Requires GROQ_API_KEY in Raycast preferences
-- Uses groq-sdk for Whisper model integration
+### DeepSeek API
+- Requires DEEPSEEK_API_KEY in Raycast preferences
+- Uses REST API for text processing and polishing features
+- Supports multiple models: deepseek-chat, deepseek-coder

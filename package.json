@@ -139,7 +139,63 @@
       "default": true,
       "required": false
     },
-
+    {
+      "name": "enableLogging",
+      "title": "Enable Debug Logging",
+      "label": "Enable debug logging for troubleshooting",
+      "description": "Enable detailed logging for development and debugging. Recommended for developers, disable for end users.",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "logLevel",
+      "title": "Log Level",
+      "description": "Set the minimum log level to capture. Lower levels include all higher levels.",
+      "type": "dropdown",
+      "required": false,
+      "default": "INFO",
+      "data": [
+        {
+          "title": "TRACE - Most detailed (development only)",
+          "value": "TRACE"
+        },
+        {
+          "title": "DEBUG - Debug information",
+          "value": "DEBUG"
+        },
+        {
+          "title": "INFO - General information (recommended)",
+          "value": "INFO"
+        },
+        {
+          "title": "WARN - Warnings only",
+          "value": "WARN"
+        },
+        {
+          "title": "ERROR - Errors only",
+          "value": "ERROR"
+        }
+      ]
+    },
+    {
+      "name": "logToFile",
+      "title": "Log to File",
+      "label": "Save logs to debug file",
+      "description": "Save debug logs to speech-to-text-debug.log file for troubleshooting",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "logToConsole",
+      "title": "Log to Console",
+      "label": "Display logs in console",
+      "description": "Display debug logs in console (for development use)",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
     {
       "name": "deepseekApiKey",
       "title": "DeepSeek API Key",

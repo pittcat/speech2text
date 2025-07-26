@@ -3,23 +3,29 @@ export interface TranscriptionPreferences {
   doubaoAppKey?: string;
   doubaoAccessToken?: string;
   doubaoSecretKey?: string;
-  
+
   // 新增 DeepSeek 配置
   deepseekApiKey?: string;
   deepseekModel?: string;
   deepseekBaseUrl?: string;
-  
+
   // 润色相关配置
-  polishPrompt?: string;        // DeepSeek 润色专用 prompt
-  enablePolishing?: boolean;    // 是否启用润色功能
-  polishingTask?: string;       // 默认润色任务类型
-  
+  polishPrompt?: string; // DeepSeek 润色专用 prompt
+  enablePolishing?: boolean; // 是否启用润色功能
+  polishingTask?: string; // 默认润色任务类型
+
   language?: string;
   // 暂时保留以兼容现有代码，后续会逐步迁移到新系统
-  promptText?: string;       // 豆包转录提示词 - 待迁移
-  userTerms?: string;        // 自定义术语 - 待迁移
+  promptText?: string; // 豆包转录提示词 - 待迁移
+  userTerms?: string; // 自定义术语 - 待迁移
   enableContext?: boolean;
   saveAudioFiles?: boolean;
+
+  // 日志控制配置
+  enableLogging?: boolean;
+  logLevel?: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR";
+  logToFile?: boolean;
+  logToConsole?: boolean;
 }
 
 export interface TranscriptionResult {
@@ -62,14 +68,7 @@ export interface DeepSeekConfig {
 }
 
 // 新增：文本处理任务类型
-export type TextProcessingTask = 
-  | "润色"
-  | "改写" 
-  | "纠错"
-  | "翻译"
-  | "扩写"
-  | "缩写"
-  | "学术润色";
+export type TextProcessingTask = "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色";
 
 // 新增：文本处理选项
 export interface TextProcessingOptions {
@@ -97,9 +96,9 @@ export interface DoubaoConfig {
 }
 
 // 新增：预设润色提示词类型
-export type PresetPromptKey = 
+export type PresetPromptKey =
   | "general"
-  | "technical" 
+  | "technical"
   | "business"
   | "academic"
   | "casual"
@@ -130,7 +129,6 @@ export type PromptOption = PresetPrompt | CustomPrompt;
 
 // 新增：润色配置管理
 export interface PolishingConfig {
-  selectedPromptId: string;     // 当前选择的 prompt ID
+  selectedPromptId: string; // 当前选择的 prompt ID
   customPrompts: CustomPrompt[]; // 用户自定义的 prompt 列表
 }
-

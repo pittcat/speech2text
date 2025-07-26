@@ -1,7 +1,8 @@
-import { environment } from "@raycast/api";
-import { writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, unlinkSync } from "fs";
+import { environment, getPreferenceValues } from "@raycast/api";
+import { appendFileSync, existsSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { TranscriptionPreferences } from "../types";
 
 // 日志级别
 export enum LogLevel {
@@ -55,28 +56,70 @@ class Logger {
       }
     }
 
-    // 默认配置
-    this.config = {
-      level: LogLevel.TRACE, // 开发时使用 TRACE，生产时可以改为 INFO
-      logToFile: true,
-      logToConsole: true,
-      maxFileSize: 50 * 1024 * 1024, // 50MB（增大以避免轮转）
-      maxFiles: 1, // 只保留1个文件
-    };
+    // 从用户preference获取配置
+    this.config = this.loadLoggerConfig();
 
-    // 记录启动信息
-    this.info("=".repeat(80));
-    this.info(`Speech to Text Plugin Started - Session: ${this.sessionId}`);
-    this.info(`Environment: ${environment.isDevelopment ? "Development" : "Production"}`);
-    this.info(`Log File: ${this.currentLogFile}`);
-    this.info("=".repeat(80));
+    // 只有在启用日志时才记录启动信息
+    if (this.config.logToFile || this.config.logToConsole) {
+      this.info("=".repeat(80));
+      this.info(`Speech to Text Plugin Started - Session: ${this.sessionId}`);
+      this.info(`Environment: ${environment.isDevelopment ? "Development" : "Production"}`);
+      this.info(`Logging Enabled: ${this.shouldLogAnything()}`);
+      this.info(`Log Level: ${this.config.level}`);
+      this.info(`Log to File: ${this.config.logToFile}`);
+      this.info(`Log to Console: ${this.config.logToConsole}`);
+      this.info(`Log File: ${this.currentLogFile}`);
+      this.info("=".repeat(80));
+    }
+  }
+
+  private loadLoggerConfig(): LoggerConfig {
+    try {
+      const prefs = getPreferenceValues<TranscriptionPreferences>();
+
+      // 智능默认值：开发环境默认开启，生产环境默认关闭
+      const isDevelopment = environment.isDevelopment;
+
+      return {
+        level: (prefs.logLevel as LogLevel) || (isDevelopment ? LogLevel.TRACE : LogLevel.INFO),
+        logToFile: prefs.logToFile !== undefined ? prefs.logToFile : true,
+        logToConsole: prefs.logToConsole !== undefined ? prefs.logToConsole : isDevelopment,
+        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFiles: 1,
+      };
+    } catch (error) {
+      // 如果无法获取preferences，使用保守的默认值
+      console.warn("Failed to load logger preferences, using defaults:", error);
+      return {
+        level: environment.isDevelopment ? LogLevel.DEBUG : LogLevel.ERROR,
+        logToFile: true,
+        logToConsole: environment.isDevelopment,
+        maxFileSize: 50 * 1024 * 1024,
+        maxFiles: 1,
+      };
+    }
+  }
+
+  private shouldLogAnything(): boolean {
+    try {
+      const prefs = getPreferenceValues<TranscriptionPreferences>();
+      return prefs.enableLogging !== false; // 默认启用，除非用户明确禁用
+    } catch (error) {
+      // 如果无法获取preferences，在开发环境下启用，生产环境下禁用
+      return environment.isDevelopment;
+    }
   }
 
   private shouldLog(level: LogLevel): boolean {
     return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[this.config.level];
   }
 
-  private formatMessage(level: LogLevel, component: string, message: string, data?: any): string {
+  private formatMessage(
+    level: LogLevel,
+    component: string,
+    message: string,
+    data?: unknown
+  ): string {
     const timestamp = new Date().toISOString();
     const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
     return `[${timestamp}] [${level}] [${this.sessionId}] [${component}] ${message}${dataStr}`;
@@ -102,7 +145,11 @@ class Logger {
     // 功能已禁用
   }
 
-  private log(level: LogLevel, component: string, message: string, data?: any): void {
+  private log(level: LogLevel, component: string, message: string, data?: unknown): void {
+    // 首先检查是否全局启用日志
+    if (!this.shouldLogAnything()) return;
+
+    // 然后检查日志级别
     if (!this.shouldLog(level)) return;
 
     const formattedMessage = this.formatMessage(level, component, message, data);
@@ -126,23 +173,23 @@ class Logger {
   }
 
   // 公共日志方法
-  trace(component: string, message: string, data?: any): void {
+  trace(component: string, message: string, data?: unknown): void {
     this.log(LogLevel.TRACE, component, message, data);
   }
 
-  debug(component: string, message: string, data?: any): void {
+  debug(component: string, message: string, data?: unknown): void {
     this.log(LogLevel.DEBUG, component, message, data);
   }
 
-  info(component: string, message: string, data?: any): void {
+  info(component: string, message: string, data?: unknown): void {
     this.log(LogLevel.INFO, component, message, data);
   }
 
-  warn(component: string, message: string, data?: any): void {
+  warn(component: string, message: string, data?: unknown): void {
     this.log(LogLevel.WARN, component, message, data);
   }
 
-  error(component: string, message: string, error?: any): void {
+  error(component: string, message: string, error?: unknown): void {
     const errorData =
       error instanceof Error
         ? {
@@ -157,6 +204,11 @@ class Logger {
 
   // 性能追踪
   startTimer(component: string, operation: string): () => void {
+    if (!this.shouldLogAnything()) {
+      // 如果日志被禁用，返回空函数
+      return () => {};
+    }
+
     const start = Date.now();
     this.trace(component, `Starting operation: ${operation}`);
 
@@ -178,21 +230,42 @@ class Logger {
     }
     return [];
   }
+
+  // 重新加载配置（当用户更改preferences时调用）
+  reloadConfig(): void {
+    this.config = this.loadLoggerConfig();
+    this.info("Logger", "Configuration reloaded", {
+      level: this.config.level,
+      logToFile: this.config.logToFile,
+      logToConsole: this.config.logToConsole,
+      loggingEnabled: this.shouldLogAnything(),
+    });
+  }
+
+  // 获取当前配置状态
+  getConfig(): LoggerConfig & { enabled: boolean } {
+    return {
+      ...this.config,
+      enabled: this.shouldLogAnything(),
+    };
+  }
 }
 
 // 导出单例
 export const logger = new Logger();
 
 // 导出便捷函数
-export const trace = (component: string, message: string, data?: any) =>
+export const trace = (component: string, message: string, data?: unknown) =>
   logger.trace(component, message, data);
-export const debug = (component: string, message: string, data?: any) =>
+export const debug = (component: string, message: string, data?: unknown) =>
   logger.debug(component, message, data);
-export const info = (component: string, message: string, data?: any) =>
+export const info = (component: string, message: string, data?: unknown) =>
   logger.info(component, message, data);
-export const warn = (component: string, message: string, data?: any) =>
+export const warn = (component: string, message: string, data?: unknown) =>
   logger.warn(component, message, data);
-export const error = (component: string, message: string, error?: any) =>
+export const error = (component: string, message: string, error?: unknown) =>
   logger.error(component, message, error);
 export const startTimer = (component: string, operation: string) =>
   logger.startTimer(component, operation);
+export const reloadLoggerConfig = () => logger.reloadConfig();
+export const getLoggerConfig = () => logger.getConfig();
