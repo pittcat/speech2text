@@ -543,35 +543,6 @@ export default function RecordTranscription() {
     }
   };
 
-  // 新增：测试 DeepSeek 连接
-  const testDeepSeekConnection = async () => {
-    try {
-      const deepseekConfig = getDeepSeekConfig();
-      if (!deepseekConfig) {
-        throw new Error("DeepSeek not configured");
-      }
-
-      const client = createDeepSeekClient(deepseekConfig);
-      const success = await client.testConnection();
-
-      if (success) {
-        await showToast({
-          style: Toast.Style.Success,
-          title: "Connection successful",
-          message: "DeepSeek API is working properly",
-        });
-      } else {
-        throw new Error("Connection test failed");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Connection failed",
-        message: errorMessage,
-      });
-    }
-  };
 
   // 保存豆包配置
   const saveDoubaoConfig = async () => {
@@ -716,14 +687,6 @@ export default function RecordTranscription() {
                 shortcut={{ modifiers: ["cmd"], key: "p" }}
               />
 
-              {currentPreferences?.enableContext && (
-                <Action
-                  title="Set as Context"
-                  icon={Icon.Plus}
-                  onAction={() => setHighlightedText(transcriptionResult.text)}
-                  shortcut={{ modifiers: ["cmd"], key: "t" }}
-                />
-              )}
             </>
           )}
 
@@ -737,14 +700,6 @@ export default function RecordTranscription() {
             />
           )}
 
-          {showDeepSeekConfig !== true && isDeepSeekConfigured() && (
-            <Action
-              title="Test Deepseek Connection"
-              icon={Icon.Network}
-              onAction={testDeepSeekConnection}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "t" }}
-            />
-          )}
 
           {/* 润色结果操作 */}
           {polishingResult?.polishedText && (
