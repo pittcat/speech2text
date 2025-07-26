@@ -721,65 +721,67 @@ export default function RecordTranscription() {
       }
       isLoading={isTranscribing}
     >
-      {/* 录音状态 */}
-      {recorderState.isRecording && (
-        <Form.Description
-          title="Recording"
-          text={`🔴 ${formatDuration(recorderState.duration)} - Press Cmd+Enter to stop recording`}
-        />
-      )}
+      {/* 状态指示区域 - 固定高度避免抖动 */}
+      <Form.Description
+        title={recorderState.isRecording ? "Recording" : isPolishing ? "Polishing" : "Status"}
+        text={
+          recorderState.isRecording
+            ? `🔴 ${formatDuration(recorderState.duration)} - Press Cmd+Enter to stop recording`
+            : isPolishing
+              ? `Processing with DeepSeek ${selectedTask}... Please wait`
+              : "Ready to record - Press Enter to start"
+        }
+      />
 
-      {/* 润色状态 */}
-      {isPolishing && (
-        <Form.Description
-          title="Polishing"
-          text={`Processing with DeepSeek ${selectedTask}... Please wait`}
-        />
-      )}
-
-      {/* 转写结果 */}
-      {transcriptionResult && (
-        <Form.TextArea
-          id="result"
-          title="Transcription Result"
-          value={transcriptionResult.text}
-          onChange={(newText) => {
+      {/* 转写结果 - 始终渲染但控制可见性 */}
+      <Form.TextArea
+        id="result"
+        title="Transcription Result"
+        value={transcriptionResult?.text || ""}
+        onChange={(newText) => {
+          if (transcriptionResult) {
             setTranscriptionResult({
               ...transcriptionResult,
               text: newText,
             });
-          }}
-          info="您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。"
-        />
-      )}
+          }
+        }}
+        placeholder={transcriptionResult ? "" : "转写结果将在这里显示..."}
+        info={transcriptionResult ? "您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。" : "开始录音后，转写结果将显示在这里"}
+      />
 
-      {/* 新增：润色结果展示 */}
+      {/* 润色结果展示 - 始终渲染但控制内容 */}
+      <Form.Separator />
+      <Form.TextArea
+        id="polished"
+        title={polishingResult ? `Polished Result (${polishingResult.task})` : "Polished Result"}
+        value={polishingResult?.polishedText || ""}
+        onChange={(newText) => {
+          if (polishingResult) {
+            setPolishingResult({
+              ...polishingResult,
+              polishedText: newText,
+            });
+          }
+        }}
+        placeholder={polishingResult ? "" : "润色结果将在这里显示..."}
+        info={
+          polishingResult
+            ? `DeepSeek ${polishingResult.model} 润色结果。您可以继续编辑。`
+            : "点击润色按钮后，结果将显示在这里"
+        }
+      />
       {polishingResult && (
-        <>
-          <Form.Separator />
-          <Form.TextArea
-            id="polished"
-            title={`Polished Result (${polishingResult.task})`}
-            value={polishingResult.polishedText}
-            onChange={(newText) => {
-              setPolishingResult({
-                ...polishingResult,
-                polishedText: newText,
-              });
-            }}
-            info={`DeepSeek ${polishingResult.model} 润色结果。您可以继续编辑。`}
-          />
-          <Form.Description
-            title="Processing Info"
-            text={`Model: ${polishingResult.model} | Task: ${polishingResult.task} | 
-                   Original: ${polishingResult.originalText.length} chars | 
-                   Polished: ${polishingResult.polishedText.length} chars${
-                     polishingResult.metadata?.usage
-                       ? ` | Tokens: ${polishingResult.metadata.usage.totalTokens}`
-                       : ""
-                   }`}
-          />
-        </>
+        <Form.Description
+          title="Processing Info"
+          text={`Model: ${polishingResult.model} | Task: ${polishingResult.task} | 
+                 Original: ${polishingResult.originalText.length} chars | 
+                 Polished: ${polishingResult.polishedText.length} chars${
+                   polishingResult.metadata?.usage
+                     ? ` | Tokens: ${polishingResult.metadata.usage.totalTokens}`
+                     : ""
+                 }`}
+        />
       )}
 
       <Form.Separator />
