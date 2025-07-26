@@ -495,7 +495,12 @@ export default function RecordTranscription() {
     let savedCount = 0;
 
     // 保存 Doubao 配置（如果有填写）
-    if (showDoubaoConfig && tempDoubaoConfig.appKey && tempDoubaoConfig.accessToken && tempDoubaoConfig.secretKey) {
+    if (
+      showDoubaoConfig &&
+      tempDoubaoConfig.appKey &&
+      tempDoubaoConfig.accessToken &&
+      tempDoubaoConfig.secretKey
+    ) {
       const doubaoSuccess = saveDoubaoCredentials(
         tempDoubaoConfig.appKey,
         tempDoubaoConfig.accessToken,
@@ -513,7 +518,12 @@ export default function RecordTranscription() {
     }
 
     // 保存 DeepSeek 配置（如果有填写）
-    if (showDeepSeekConfig && tempDeepSeekConfig.apiKey && tempDeepSeekConfig.model && tempDeepSeekConfig.baseUrl) {
+    if (
+      showDeepSeekConfig &&
+      tempDeepSeekConfig.apiKey &&
+      tempDeepSeekConfig.model &&
+      tempDeepSeekConfig.baseUrl
+    ) {
       const deepseekSuccess = saveDeepSeekCredentials(
         tempDeepSeekConfig.apiKey,
         tempDeepSeekConfig.model,
@@ -555,7 +565,6 @@ export default function RecordTranscription() {
       });
     }
   };
-
 
   // 保存豆包配置
   const saveDoubaoConfig = async () => {
@@ -666,10 +675,10 @@ export default function RecordTranscription() {
     <Form
       navigationTitle={
         recorderState.isRecording
-          ? "Recording... Press Enter to stop"
+          ? "Recording... Press Cmd+R to stop"
           : isPolishing
             ? "Polishing with DeepSeek..."
-            : "Speech to Text - Press Enter to start"
+            : "Speech to Text - Press Cmd+R to start"
       }
       actions={
         <ActionPanel>
@@ -678,13 +687,13 @@ export default function RecordTranscription() {
             title={recorderState.isRecording ? "Stop Recording" : "Start Recording"}
             icon={recorderState.isRecording ? Icon.Stop : Icon.Microphone}
             onAction={handleRecordAndTranscribe}
-            shortcut={{ modifiers: [], key: "enter" }}
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
           />
 
           {/* 配置管理操作 */}
           {(showDoubaoConfig || showDeepSeekConfig) && (
             <Action
-              title="💾 保存API配置"
+              title="💾 保存api配置"
               icon={Icon.CheckCircle}
               onAction={saveAllConfigurations}
               shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
@@ -717,20 +726,18 @@ export default function RecordTranscription() {
                 onAction={handlePolishText}
                 shortcut={{ modifiers: ["cmd"], key: "p" }}
               />
-
             </>
           )}
 
           {/* DeepSeek 配置管理 */}
           {showDeepSeekConfig !== true && (
             <Action
-              title="Edit DeepSeek Config"
+              title="Edit Deepseek Config"
               icon={Icon.Gear}
               onAction={editDeepSeekConfig}
               shortcut={{ modifiers: ["cmd", "shift"], key: "e" }}
             />
           )}
-
 
           {/* 润色结果操作 */}
           {polishingResult?.polishedText && (
@@ -757,10 +764,10 @@ export default function RecordTranscription() {
         title={recorderState.isRecording ? "Recording" : isPolishing ? "Polishing" : "Status"}
         text={
           recorderState.isRecording
-            ? `🔴 ${formatDuration(recorderState.duration)} - Press Cmd+Enter to stop recording`
+            ? `🔴 ${formatDuration(recorderState.duration)} - Press Cmd+R to stop recording`
             : isPolishing
               ? `Processing with DeepSeek ${selectedTask}... Please wait`
-              : "Ready to record - Press Enter to start"
+              : "Ready to record - Press Cmd+R to start"
         }
       />
 
@@ -778,7 +785,11 @@ export default function RecordTranscription() {
           }
         }}
         placeholder={transcriptionResult ? "" : "转写结果将在这里显示..."}
-        info={transcriptionResult ? "您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。" : "开始录音后，转写结果将显示在这里"}
+        info={
+          transcriptionResult
+            ? "您可以编辑转录结果来修正识别错误。编辑后的内容会被复制到剪贴板。"
+            : "开始录音后，转写结果将显示在这里"
+        }
       />
 
       {/* 润色结果展示 - 始终渲染但控制内容 */}

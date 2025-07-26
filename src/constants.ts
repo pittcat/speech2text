@@ -47,7 +47,8 @@ export const DEFAULT_PREFERENCES = {
   aiProvider: "doubao" as const,
   language: "auto",
   enableContext: true,
-  saveAudioFiles: true,
+  saveAudioFiles: false,
+  audioSaveLocation: join(environment.supportPath, "audio"),
   promptText:
     "Maintain proper sentence structure, punctuation, and paragraphs. Format numbers, currency, and units appropriately.",
   // DeepSeek 相关默认配置

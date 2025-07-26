@@ -286,6 +286,23 @@
           "value": "学术润色"
         }
       ]
+    },
+    {
+      "name": "saveAudioFiles",
+      "title": "保存音频文件",
+      "label": "录音完成后保留音频文件",
+      "description": "是否在转录完成后保留原始音频文件。关闭此选项可节省存储空间",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "audioSaveLocation",
+      "title": "音频保存位置",
+      "description": "自定义音频文件保存位置。留空则使用默认位置",
+      "type": "textfield",
+      "required": false,
+      "placeholder": "输入自定义路径或留空使用默认位置"
     }
   ],
   "dependencies": {

@@ -43,7 +43,7 @@ class Logger {
 
     // 设置日志目录为 /tmp
     this.logDir = "/tmp";
-    
+
     // 设置固定的日志文件名
     this.currentLogFile = join(this.logDir, "speech-to-text-debug.log");
 
@@ -64,7 +64,10 @@ class Logger {
       // 记录启动信息
       this.info("Logger", "=".repeat(80));
       this.info("Logger", `Speech to Text Plugin Started - Session: ${this.sessionId}`);
-      this.info("Logger", `Environment: ${environment.isDevelopment ? "Development" : "Production"}`);
+      this.info(
+        "Logger",
+        `Environment: ${environment.isDevelopment ? "Development" : "Production"}`
+      );
       this.info("Logger", `Debug Mode: ${this.shouldCreateLogFile()}`);
       this.info("Logger", `Logging Enabled: ${this.shouldLogAnything()}`);
       this.info("Logger", `Log Level: ${this.config.level}`);
@@ -76,9 +79,9 @@ class Logger {
   }
 
   private loadLoggerConfig(): LoggerConfig {
-    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const debugFlagFile = "/tmp/speech-to-text-debug.flag";
     const isDebugMode = existsSync(debugFlagFile);
-    
+
     // 如果是debug模式，强制启用debug配置
     if (isDebugMode) {
       return {
@@ -89,7 +92,7 @@ class Logger {
         maxFiles: 1,
       };
     }
-    
+
     try {
       const prefs = getPreferenceValues<TranscriptionPreferences>();
 
@@ -117,14 +120,14 @@ class Logger {
   }
 
   private shouldLogAnything(): boolean {
-    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const debugFlagFile = "/tmp/speech-to-text-debug.flag";
     const isDebugMode = existsSync(debugFlagFile);
-    
+
     // debug模式下强制启用日志
     if (isDebugMode) {
       return true;
     }
-    
+
     try {
       const prefs = getPreferenceValues<TranscriptionPreferences>();
       return prefs.enableLogging !== false; // 默认启用，除非用户明确禁用
@@ -136,9 +139,9 @@ class Logger {
 
   private shouldCreateLogFile(): boolean {
     // 检查是否通过debug标志文件启用了debug模式
-    const debugFlagFile = '/tmp/speech-to-text-debug.flag';
+    const debugFlagFile = "/tmp/speech-to-text-debug.flag";
     const isDebugMode = existsSync(debugFlagFile);
-    
+
     // 只有在debug模式下才创建日志文件
     return isDebugMode;
   }

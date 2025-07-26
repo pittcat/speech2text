@@ -6,6 +6,7 @@ import { existsSync, mkdirSync } from "fs";
 import { STORAGE_PATH, SOX_COMMAND } from "../constants";
 import { AudioRecorderState } from "../types";
 import { debug, error } from "../utils/logger";
+import { getPreferences } from "../utils/ai/transcription";
 
 export function useAudioRecorder() {
   const [state, setState] = useState<AudioRecorderState>({
@@ -19,17 +20,20 @@ export function useAudioRecorder() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
 
   // 确保音频目录存在
-  const ensureAudioDirectory = () => {
-    if (!existsSync(STORAGE_PATH.AUDIO_DIR)) {
-      mkdirSync(STORAGE_PATH.AUDIO_DIR, { recursive: true });
+  const ensureAudioDirectory = (customPath?: string) => {
+    const audioDir = customPath || STORAGE_PATH.AUDIO_DIR;
+    if (!existsSync(audioDir)) {
+      mkdirSync(audioDir, { recursive: true });
     }
+    return audioDir;
   };
 
   // 生成音频文件路径
   const generateAudioFilePath = () => {
-    ensureAudioDirectory();
+    const preferences = getPreferences();
+    const audioDir = ensureAudioDirectory(preferences.audioSaveLocation);
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    return join(STORAGE_PATH.AUDIO_DIR, `recording-${timestamp}.wav`);
+    return join(audioDir, `recording-${timestamp}.wav`);
   };
 
   // 开始录音
@@ -95,7 +99,7 @@ export function useAudioRecorder() {
       await showToast({
         style: Toast.Style.Success,
         title: "Recording started",
-        message: "Press Enter to stop recording",
+        message: "Press Cmd+R to stop recording",
       });
 
       debug("AudioRecorder", "🐛 DEBUG: startRecording() completed successfully", {

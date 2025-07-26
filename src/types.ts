@@ -20,6 +20,7 @@ export interface TranscriptionPreferences {
   userTerms?: string; // 自定义术语 - 待迁移
   enableContext?: boolean;
   saveAudioFiles?: boolean;
+  audioSaveLocation?: string; // 音频文件保存位置
 
   // 日志控制配置
   enableLogging?: boolean;

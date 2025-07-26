@@ -41,7 +41,11 @@ type ExtensionPreferences = {
   /** Enable Text Polishing - Enable the DeepSeek-powered text polishing functionality */
   "enablePolishing": boolean,
   /** Default Polishing Task - Default task type for text polishing */
-  "polishingTask": "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色"
+  "polishingTask": "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色",
+  /** 保存音频文件 - 是否在转录完成后保留原始音频文件。关闭此选项可节省存储空间 */
+  "saveAudioFiles": boolean,
+  /** 音频保存位置 - 自定义音频文件保存位置。留空则使用默认位置 */
+  "audioSaveLocation"?: string
 }
 
 /** Preferences accessible in all the extension's commands */
