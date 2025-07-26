@@ -22,6 +22,14 @@ type ExtensionPreferences = {
   "userTerms"?: string,
   /** Use Highlighted Text - Automatically use any text you have highlighted in other apps as context for transcription */
   "enableContext": boolean,
+  /** Enable Debug Logging - Enable detailed logging for development and debugging. Recommended for developers, disable for end users. */
+  "enableLogging": boolean,
+  /** Log Level - Set the minimum log level to capture. Lower levels include all higher levels. */
+  "logLevel": "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR",
+  /** Log to File - Save debug logs to speech-to-text-debug.log file for troubleshooting */
+  "logToFile": boolean,
+  /** Log to Console - Display debug logs in console (for development use) */
+  "logToConsole": boolean,
   /** DeepSeek API Key - Your DeepSeek API key for text polishing features */
   "deepseekApiKey"?: string,
   /** DeepSeek Model - DeepSeek model to use for text processing */

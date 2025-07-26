@@ -123,7 +123,7 @@ export class DoubaoClient extends EventEmitter {
 
   async sendConfig(config?: DoubaoConfig): Promise<void> {
     const requestConfig = {
-      user: { uid: "demo_uid" },  // 改为与 Python 一致
+      user: { uid: "demo_uid" }, // 改为与 Python 一致
       audio: {
         format: "pcm",
         codec: "raw",
@@ -169,11 +169,11 @@ export class DoubaoClient extends EventEmitter {
 
       const onConfigResponse = (success: boolean) => {
         clearTimeout(timeout);
-        this.off('configResponse', onConfigResponse);
+        this.off("configResponse", onConfigResponse);
         resolve(success);
       };
 
-      this.once('configResponse', onConfigResponse);
+      this.once("configResponse", onConfigResponse);
     });
   }
 
@@ -279,15 +279,15 @@ export class DoubaoClient extends EventEmitter {
     message.writeInt32BE(seq, 4);
     message.writeUInt32BE(payload.length, 8);
     payload.copy(message, 12);
-    
+
     trace("DoubaoClient", "📦 SEND: Building message", {
-      headerHex: header.toString('hex'),
+      headerHex: header.toString("hex"),
       seq,
       payloadSize: payload.length,
       totalSize: message.length,
-      first20Bytes: message.slice(0, 20).toString('hex')
+      first20Bytes: message.slice(0, 20).toString("hex"),
     });
-    
+
     return message;
   }
 
@@ -295,13 +295,13 @@ export class DoubaoClient extends EventEmitter {
     try {
       trace("DoubaoClient", "🔍 RAW: Received raw message", {
         size: data.length,
-        first10Bytes: data.slice(0, 10).toString('hex'),
+        first10Bytes: data.slice(0, 10).toString("hex"),
         header: {
-          byte0: `0x${data[0].toString(16).padStart(2, '0')}`,
-          byte1: `0x${data[1].toString(16).padStart(2, '0')}`,
-          byte2: `0x${data[2].toString(16).padStart(2, '0')}`,
-          byte3: `0x${data[3].toString(16).padStart(2, '0')}`
-        }
+          byte0: `0x${data[0].toString(16).padStart(2, "0")}`,
+          byte1: `0x${data[1].toString(16).padStart(2, "0")}`,
+          byte2: `0x${data[2].toString(16).padStart(2, "0")}`,
+          byte3: `0x${data[3].toString(16).padStart(2, "0")}`,
+        },
       });
 
       const response = await this.parseResponse(data);
@@ -338,7 +338,7 @@ export class DoubaoClient extends EventEmitter {
         const result = response.payload_msg.result;
 
         // 处理字典格式的 result
-        if (typeof result === 'object' && !Array.isArray(result)) {
+        if (typeof result === "object" && !Array.isArray(result)) {
           if (result.text) {
             debug("DoubaoClient", "Transcription update (dict format)", {
               text: result.text,
@@ -410,7 +410,7 @@ export class DoubaoClient extends EventEmitter {
       messageType: `0x${messageType.toString(16)}`,
       flags: `0x${messageTypeSpecificFlags.toString(16)}`,
       serialization: serializationMethod,
-      compression: messageCompression
+      compression: messageCompression,
     });
 
     let payload = msg.slice(headerSize * 4);

@@ -134,6 +134,8 @@ export const PRESET_POLISH_PROMPTS: PresetPrompt[] = [
 ];
 
 // 新增：获取所有可用的润色提示词（预设 + 自定义）
-export const getAllPromptOptions = (customPrompts: import("./types").CustomPrompt[] = []): import("./types").PromptOption[] => {
+export const getAllPromptOptions = (
+  customPrompts: import("./types").CustomPrompt[] = []
+): import("./types").PromptOption[] => {
   return [...PRESET_POLISH_PROMPTS, ...customPrompts];
 };

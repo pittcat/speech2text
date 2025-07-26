@@ -1,4 +1,9 @@
-import { DeepSeekConfig, PolishingResult, TextProcessingTask, TextProcessingOptions } from "../../types";
+import {
+  DeepSeekConfig,
+  PolishingResult,
+  TextProcessingTask,
+  TextProcessingOptions,
+} from "../../types";
 import { trace, debug, info, warn, error } from "../logger";
 
 /**
@@ -35,7 +40,7 @@ export class DeepSeekClient {
    */
   async processText(text: string, options: TextProcessingOptions): Promise<PolishingResult> {
     const startTime = Date.now();
-    
+
     try {
       debug("DeepSeekClient", "Starting text processing", {
         task: options.task,
@@ -45,7 +50,7 @@ export class DeepSeekClient {
 
       // 构建系统提示词
       const systemPrompt = this.buildSystemPrompt(options.task, options.customPrompt);
-      
+
       // 构建用户消息
       const userMessage = `请对以下文本进行${options.task}：\n\n${text}`;
 
@@ -54,7 +59,7 @@ export class DeepSeekClient {
         model: this.model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage }
+          { role: "user", content: userMessage },
         ],
         temperature: options.temperature || this.defaultTemperature,
         max_tokens: options.maxTokens || this.defaultMaxTokens,
@@ -71,18 +76,20 @@ export class DeepSeekClient {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`DeepSeek API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(
+          `DeepSeek API error: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
       const result = await response.json();
-      
+
       // 验证响应格式
       if (!result.choices || !result.choices[0] || !result.choices[0].message) {
         throw new Error("Invalid response format from DeepSeek API");
@@ -101,11 +108,13 @@ export class DeepSeekClient {
         metadata: {
           temperature: requestBody.temperature,
           maxTokens: requestBody.max_tokens,
-          usage: result.usage ? {
-            promptTokens: result.usage.prompt_tokens,
-            completionTokens: result.usage.completion_tokens,
-            totalTokens: result.usage.total_tokens,
-          } : undefined,
+          usage: result.usage
+            ? {
+                promptTokens: result.usage.prompt_tokens,
+                completionTokens: result.usage.completion_tokens,
+                totalTokens: result.usage.total_tokens,
+              }
+            : undefined,
         },
       };
 
@@ -118,10 +127,9 @@ export class DeepSeekClient {
       });
 
       return polishingResult;
-
     } catch (err) {
       const processingTime = Date.now() - startTime;
-      
+
       error("DeepSeekClient", "Text processing failed", {
         task: options.task,
         textLength: text.length,
@@ -142,17 +150,18 @@ export class DeepSeekClient {
   private buildSystemPrompt(task: TextProcessingTask, customPrompt?: string): string {
     // 预定义的任务提示词（简洁版本，强调只返回结果）
     const taskPrompts: Record<TextProcessingTask, string> = {
-      "润色": "请润色文本，使其更流畅专业。只返回润色后的文本，不要添加解释或说明。",
-      "改写": "请重写文本，保持原意但使用不同表达。只返回改写后的文本，不要添加解释或说明。",
-      "纠错": "请纠正文本中的错误。只返回纠正后的文本，不要添加解释或说明。",
-      "翻译": "请翻译文本。只返回翻译结果，不要添加解释或说明。",
-      "扩写": "请扩展文本内容。只返回扩展后的文本，不要添加解释或说明。",
-      "缩写": "请精简文本内容。只返回精简后的文本，不要添加解释或说明。",
-      "学术润色": "请将文本调整为学术风格。只返回学术风格的文本，不要添加解释或说明。"
+      润色: "请润色文本，使其更流畅专业。只返回润色后的文本，不要添加解释或说明。",
+      改写: "请重写文本，保持原意但使用不同表达。只返回改写后的文本，不要添加解释或说明。",
+      纠错: "请纠正文本中的错误。只返回纠正后的文本，不要添加解释或说明。",
+      翻译: "请翻译文本。只返回翻译结果，不要添加解释或说明。",
+      扩写: "请扩展文本内容。只返回扩展后的文本，不要添加解释或说明。",
+      缩写: "请精简文本内容。只返回精简后的文本，不要添加解释或说明。",
+      学术润色: "请将文本调整为学术风格。只返回学术风格的文本，不要添加解释或说明。",
     };
 
     // 获取基础提示词
-    const basePrompt = taskPrompts[task] || `请对文本进行${task}处理。只返回处理后的文本，不要添加解释或说明。`;
+    const basePrompt =
+      taskPrompts[task] || `请对文本进行${task}处理。只返回处理后的文本，不要添加解释或说明。`;
 
     // 如果有自定义提示词，确保也只返回结果
     if (customPrompt) {
@@ -169,7 +178,7 @@ export class DeepSeekClient {
   async testConnection(): Promise<boolean> {
     try {
       debug("DeepSeekClient", "Testing connection");
-      
+
       const testResult = await this.processText("测试连接", {
         task: "润色",
         temperature: 0.1,
@@ -213,4 +222,4 @@ export function validateDeepSeekConfig(config: Partial<DeepSeekConfig>): config 
     config.model.trim() !== "" &&
     config.baseUrl.trim() !== ""
   );
-} 
+}

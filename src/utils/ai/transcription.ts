@@ -41,7 +41,9 @@ export function getPreferences(): TranscriptionPreferences {
     doubaoAppKey: doubaoCredentials?.appKey,
     doubaoAccessToken: doubaoCredentials?.accessToken,
     doubaoSecretKey: doubaoCredentials?.secretKey,
-    deepseekApiKey: deepseekCredentials?.apiKey ? `${deepseekCredentials.apiKey.substring(0, 4)}****` : "NONE",
+    deepseekApiKey: deepseekCredentials?.apiKey
+      ? `${deepseekCredentials.apiKey.substring(0, 4)}****`
+      : "NONE",
     deepseekModel: deepseekCredentials?.model,
     deepseekBaseUrl: deepseekCredentials?.baseUrl,
   });
@@ -57,14 +59,17 @@ export function getPreferences(): TranscriptionPreferences {
     // DeepSeek配置：优先使用Raycast preferences，fallback到本地配置
     deepseekApiKey: prefs.deepseekApiKey || deepseekCredentials?.apiKey,
     deepseekModel: prefs.deepseekModel || deepseekCredentials?.model || "deepseek-chat",
-    deepseekBaseUrl: prefs.deepseekBaseUrl || deepseekCredentials?.baseUrl || "https://api.deepseek.com/v1",
+    deepseekBaseUrl:
+      prefs.deepseekBaseUrl || deepseekCredentials?.baseUrl || "https://api.deepseek.com/v1",
   };
 
   console.log("🔧 Transcription: Final merged prefs", {
     doubaoAppKey: mergedPrefs.doubaoAppKey,
     doubaoAccessToken: mergedPrefs.doubaoAccessToken,
     doubaoSecretKey: mergedPrefs.doubaoSecretKey,
-    deepseekApiKey: mergedPrefs.deepseekApiKey ? `${mergedPrefs.deepseekApiKey.substring(0, 4)}****` : "NONE",
+    deepseekApiKey: mergedPrefs.deepseekApiKey
+      ? `${mergedPrefs.deepseekApiKey.substring(0, 4)}****`
+      : "NONE",
     deepseekModel: mergedPrefs.deepseekModel,
     deepseekBaseUrl: mergedPrefs.deepseekBaseUrl,
     enablePolishing: mergedPrefs.enablePolishing,
@@ -214,19 +219,23 @@ async function transcribeWithDoubao(
     // 基础超时：60秒，额外时间：音频长度 * 2 + 网络缓冲30秒
     const baseTimeout = 60000; // 60秒基础超时
     const audioLengthMs = audioDuration * 1000; // 音频长度转为毫秒
-    const dynamicTimeout = baseTimeout + (audioLengthMs * 2) + 30000; // 音频长度*2 + 30秒缓冲
+    const dynamicTimeout = baseTimeout + audioLengthMs * 2 + 30000; // 音频长度*2 + 30秒缓冲
     const timeoutSeconds = Math.round(dynamicTimeout / 1000);
 
-    debug("Transcription", "Timeout calculation", { 
-      audioDuration, 
-      timeoutMs: dynamicTimeout, 
-      timeoutSeconds 
+    debug("Transcription", "Timeout calculation", {
+      audioDuration,
+      timeoutMs: dynamicTimeout,
+      timeoutSeconds,
     });
 
     // 创建一个 Promise 来等待最终结果（模仿 Python 的并发模式）
     const finalResultPromise = new Promise<string>((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`Transcription timeout after ${timeoutSeconds} seconds (audio: ${audioDuration}s)`));
+        reject(
+          new Error(
+            `Transcription timeout after ${timeoutSeconds} seconds (audio: ${audioDuration}s)`
+          )
+        );
       }, dynamicTimeout);
 
       client.once("final", (text: string) => {
@@ -280,8 +289,6 @@ async function transcribeWithDoubao(
     throw err;
   }
 }
-
-
 
 // 后处理文本
 function postProcessText(text: string, preferences: TranscriptionPreferences): string {

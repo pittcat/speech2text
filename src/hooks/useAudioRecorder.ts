@@ -46,7 +46,7 @@ export function useAudioRecorder() {
         audioFilePath,
       });
       debug("AudioRecorder", "🐛 DEBUG: State updated to isRecording=true");
-      
+
       // 添加延迟确认状态更新完成
       setTimeout(() => {
         debug("AudioRecorder", "🐛 DEBUG: State should be updated now, checking...");
@@ -98,7 +98,9 @@ export function useAudioRecorder() {
         message: "Press Enter to stop recording",
       });
 
-      debug("AudioRecorder", "🐛 DEBUG: startRecording() completed successfully", { audioFilePath });
+      debug("AudioRecorder", "🐛 DEBUG: startRecording() completed successfully", {
+        audioFilePath,
+      });
       return audioFilePath;
     } catch (error) {
       console.error("Failed to start recording:", error);
@@ -120,11 +122,14 @@ export function useAudioRecorder() {
   const stopRecording = useCallback(async () => {
     debug("AudioRecorder", "🐛 DEBUG: stopRecording() called", {
       isRecording: state.isRecording,
-      processExists: !!recordingProcess.current
+      processExists: !!recordingProcess.current,
     });
 
     if (!state.isRecording || !recordingProcess.current) {
-      debug("AudioRecorder", "🐛 DEBUG: stopRecording() early return - not recording or no process");
+      debug(
+        "AudioRecorder",
+        "🐛 DEBUG: stopRecording() early return - not recording or no process"
+      );
       return null;
     }
 
