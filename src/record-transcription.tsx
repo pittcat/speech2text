@@ -8,6 +8,7 @@ import {
   Toast,
   Clipboard,
   useNavigation,
+  LocalStorage,
 } from "@raycast/api";
 import { useAudioRecorder } from "./hooks/useAudioRecorder";
 import { transcribeAudio, getPreferences } from "./utils/ai/transcription";
@@ -19,10 +20,9 @@ import {
   PolishingResult,
   TextProcessingTask,
   PromptOption,
-  CustomPrompt,
 } from "./types";
 import { SUPPORTED_LANGUAGES } from "./constants";
-import { logger, trace, debug, info, warn, error } from "./utils/logger";
+import { logger, debug, info, warn, error } from "./utils/logger";
 import TranscriptionHistory from "./transcription-history";
 import {
   isDoubaoConfigured,
@@ -34,9 +34,7 @@ import {
   getDeepSeekConfig,
 } from "./utils/config";
 import {
-  DeepSeekClient,
   createDeepSeekClient,
-  validateDeepSeekConfig,
 } from "./utils/ai/deepseek-client";
 import {
   getAllAvailablePrompts,
@@ -45,6 +43,28 @@ import {
   validateCustomPrompt,
   getPromptContent,
 } from "./utils/prompt-manager";
+import { detectProgrammingContent } from "./utils/programming-terms-corrector";
+
+/**
+ * 从润色模板推断对应的任务类型
+ */
+function getTaskFromPromptId(promptId: string): TextProcessingTask {
+  const taskMappings: Record<string, TextProcessingTask> = {
+    "general": "润色",
+    "technical": "润色",
+    "business": "润色", 
+    "academic": "学术润色",
+    "casual": "润色",
+    "formal": "润色",
+    "concise": "缩写",
+    "detailed": "扩写",
+    "code-comment": "润色",
+    "tech-translation": "翻译",
+    "vibe-coding": "vibe coding"
+  };
+  
+  return taskMappings[promptId] || "润色";
+}
 
 export default function RecordTranscription() {
   const { push } = useNavigation();
@@ -80,20 +100,34 @@ export default function RecordTranscription() {
     baseUrl: "https://api.deepseek.com/v1",
   });
 
-  // 新增：润色任务选择
-  const [selectedTask, setSelectedTask] = useState<TextProcessingTask>("润色");
 
   // 新增：润色提示词管理
   const [availablePrompts, setAvailablePrompts] = useState<PromptOption[]>([]);
-  const [selectedPromptId, setSelectedPromptId] = useState<string>("general");
+  const [selectedPromptId, setSelectedPromptId] = useState<string>(
+    currentPreferences.selectedPromptId || "general"
+  );
   const [showCustomPromptModal, setShowCustomPromptModal] = useState(false);
   const [newPromptName, setNewPromptName] = useState("");
   const [newPromptContent, setNewPromptContent] = useState("");
 
-  // 初始化可用的润色提示词
+  // 初始化可用的润色提示词并加载用户上次的选择
   useEffect(() => {
     const prompts = getAllAvailablePrompts();
     setAvailablePrompts(prompts);
+    
+    // 从本地存储加载用户上次的选择
+    LocalStorage.getItem("selectedPromptId").then((savedPromptId) => {
+      if (savedPromptId && typeof savedPromptId === "string") {
+        // 验证保存的ID是否仍然有效
+        const isValidId = prompts.some(p => (p.isCustom ? p.id : p.key) === savedPromptId);
+        if (isValidId) {
+          setSelectedPromptId(savedPromptId);
+          debug("RecordTranscription", "Restored previous prompt selection", { 
+            promptId: savedPromptId 
+          });
+        }
+      }
+    });
   }, [showCustomPromptModal]); // 当自定义提示词弹窗关闭时刷新
 
   // 记录组件初始化
@@ -265,6 +299,25 @@ export default function RecordTranscription() {
 
         setTranscriptionResult(result);
 
+        // 检测是否为编程内容，自动选择合适的润色模板
+        if (result.text && detectProgrammingContent(result.text)) {
+          debug(
+            "RecordTranscription",
+            "Detected programming content, auto-selecting vibe coding template"
+          );
+          // 自动选择Vibe Coding模板（同时包含纠错和润色）
+          setSelectedPromptId("vibe-coding");
+          // 保存自动选择的模板
+          saveSelectedPromptId("vibe-coding");
+
+          // 显示提示
+          await showToast({
+            style: Toast.Style.Success,
+            title: "检测到编程内容",
+            message: "已自动切换到Vibe Coding模式",
+          });
+        }
+
         // 添加到历史记录
         addToHistory(result);
 
@@ -367,12 +420,24 @@ export default function RecordTranscription() {
     }
   };
 
+  // 保存模板选择到本地存储
+  const saveSelectedPromptId = async (promptId: string) => {
+    try {
+      await LocalStorage.setItem("selectedPromptId", promptId);
+      debug("RecordTranscription", "Saved prompt selection", { promptId });
+    } catch (error) {
+      debug("RecordTranscription", "Failed to save prompt selection", { error });
+    }
+  };
+
   // 处理润色模板选择
   const handleTemplateChange = (value: string) => {
     if (value === "__add_custom__") {
       setShowCustomPromptModal(true);
     } else {
       setSelectedPromptId(value);
+      // 保存用户的选择
+      saveSelectedPromptId(value);
     }
   };
 
@@ -434,8 +499,12 @@ export default function RecordTranscription() {
     });
 
     try {
+      // 从选中的模板推断任务类型
+      const inferredTask = getTaskFromPromptId(selectedPromptId);
+      
       debug("RecordTranscription", "Starting text polishing", {
-        task: selectedTask,
+        promptId: selectedPromptId,
+        inferredTask,
         textLength: transcriptionResult.text.length,
       });
 
@@ -451,14 +520,15 @@ export default function RecordTranscription() {
       const customPrompt = selectedPrompt ? getPromptContent(selectedPrompt) : undefined;
 
       const result = await client.processText(transcriptionResult.text, {
-        task: selectedTask,
+        task: inferredTask,
         customPrompt,
         temperature: 0.7,
         maxTokens: 2000,
       });
 
       info("RecordTranscription", "Text polishing completed", {
-        task: selectedTask,
+        promptId: selectedPromptId,
+        inferredTask,
         originalLength: result.originalText.length,
         polishedLength: result.polishedText.length,
         model: result.model,
@@ -721,7 +791,11 @@ export default function RecordTranscription() {
 
               {/* 新增：润色功能 */}
               <Action
-                title={isPolishing ? "Polishing…" : `Polish with DeepSeek (${selectedTask})`}
+                title={
+                  isPolishing 
+                    ? "Polishing…" 
+                    : `Polish with ${availablePrompts.find(p => (p.isCustom ? p.id : p.key) === selectedPromptId)?.name || "DeepSeek"}`
+                }
                 icon={isPolishing ? Icon.CircleProgress : Icon.Wand}
                 onAction={handlePolishText}
                 shortcut={{ modifiers: ["cmd"], key: "p" }}
@@ -766,7 +840,7 @@ export default function RecordTranscription() {
           recorderState.isRecording
             ? `🔴 ${formatDuration(recorderState.duration)} - Press Cmd+R to stop recording`
             : isPolishing
-              ? `Processing with DeepSeek ${selectedTask}... Please wait`
+              ? "Processing with DeepSeek... Please wait"
               : "Ready to record - Press Cmd+R to start"
         }
       />
@@ -795,6 +869,17 @@ export default function RecordTranscription() {
               },
             });
           }
+
+          // 检测编程内容（延迟检测以避免频繁触发）
+          if (newText && newText.length > 20) {
+            setTimeout(() => {
+              if (detectProgrammingContent(newText) && selectedPromptId !== "vibe-coding") {
+                debug("RecordTranscription", "Auto-detected programming content in user input");
+                setSelectedPromptId("vibe-coding");
+                saveSelectedPromptId("vibe-coding");
+              }
+            }, 1000);
+          }
         }}
         placeholder={transcriptionResult ? "" : "转写结果将在这里显示..."}
         info={
@@ -821,7 +906,7 @@ export default function RecordTranscription() {
             setPolishingResult({
               originalText: "",
               polishedText: newText,
-              task: selectedTask,
+              task: getTaskFromPromptId(selectedPromptId),
               model: tempDeepSeekConfig.model || "deepseek-chat",
               timestamp: Date.now(),
               metadata: {
@@ -977,21 +1062,6 @@ export default function RecordTranscription() {
         <Form.Dropdown.Item value="__add_custom__" title="➕ Add Custom Prompt" />
       </Form.Dropdown>
 
-      <Form.Dropdown
-        id="polishingTask"
-        title="润色任务"
-        value={selectedTask}
-        onChange={(value) => setSelectedTask(value as TextProcessingTask)}
-        isDisabled={recorderState.isRecording || isPolishing}
-      >
-        <Form.Dropdown.Item value="润色" title="润色 - 优化表达" />
-        <Form.Dropdown.Item value="改写" title="改写 - 重新表达" />
-        <Form.Dropdown.Item value="纠错" title="纠错 - 修正错误" />
-        <Form.Dropdown.Item value="扩写" title="扩写 - 增加内容" />
-        <Form.Dropdown.Item value="缩写" title="缩写 - 精简内容" />
-        <Form.Dropdown.Item value="翻译" title="翻译 - 中英互译" />
-        <Form.Dropdown.Item value="学术润色" title="学术润色 - 学术风格" />
-      </Form.Dropdown>
     </Form>
   );
 }

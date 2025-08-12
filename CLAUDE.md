@@ -30,10 +30,10 @@ node test-doubao-client.js
 ## Architecture Overview
 
 ### Core Components Structure
-- **Main UI Components**: `record-transcription.tsx` (main recording interface), `transcription-history.tsx` (history management), `view-logs.tsx` (debugging interface)
-- **Audio Recording**: `hooks/useAudioRecorder.ts` handles Sox-based 16kHz WAV recording with real-time timing
-- **AI Integration**: `utils/ai/transcription.ts` orchestrates speech recognition, `utils/ai/doubao-client.ts` implements complex WebSocket binary protocol for Doubao, `utils/ai/deepseek-client.ts` handles text polishing
-- **Data Management**: `utils/history.ts` manages transcription records, `utils/logger.ts` provides structured logging
+- **Main UI Components**: `src/record-transcription.tsx` (main recording interface), `src/transcription-history.tsx` (history management), `src/view-logs.tsx` (debugging interface)
+- **Audio Recording**: `src/hooks/useAudioRecorder.ts` handles Sox-based 16kHz WAV recording with real-time timing
+- **AI Integration**: `src/utils/ai/transcription.ts` orchestrates speech recognition, `src/utils/ai/doubao-client.ts` implements complex WebSocket binary protocol for Doubao, `src/utils/ai/deepseek-client.ts` handles text polishing
+- **Data Management**: `src/utils/history.ts` manages transcription records, `src/utils/logger.ts` provides structured logging
 
 ### AI Services Architecture
 - **Doubao Engine**: WebSocket-based binary protocol with real-time streaming for speech recognition, requires complex frame handling and authentication
@@ -76,9 +76,9 @@ node test-doubao-client.js
 - File-based storage for transcription history
 
 ### Logging and Debugging
-- Structured logging system with different levels (debug, info, error)
+- Structured logging system with different levels (TRACE, DEBUG, INFO, WARN, ERROR)
 - In-app log viewer component for troubleshooting
-- Debug guide available in DEBUG-GUIDE.md
+- Debug mode creates log file at `/tmp/speech-to-text-debug.log`
 
 ## Testing Approach
 
@@ -115,12 +115,12 @@ Since there's no formal test framework, test individual components by:
 - Creating temporary test files to isolate component behavior
 
 ### Debugging WebSocket Issues
-- Enable debug logging in `utils/logger.ts` by setting log level
-- View real-time logs through the built-in log viewer (`view-logs.tsx`)
-- Check WebSocket frame structure in `utils/ai/doubao-client.ts`
+- Enable debug logging in Raycast preferences or use `npm run dev:debug`
+- View real-time logs through the built-in log viewer (`src/view-logs.tsx`)
+- Check WebSocket frame structure in `src/utils/ai/doubao-client.ts`
 
 ### Adding New Text Processing Features
-1. Add new action type in `utils/ai/deepseek-client.ts`
-2. Create prompt template in `utils/prompt-manager.ts`
-3. Update UI in `record-transcription.tsx` to include new action
+1. Add new action type in `src/utils/ai/deepseek-client.ts`
+2. Create prompt template in `src/utils/prompt-manager.ts`
+3. Update UI in `src/record-transcription.tsx` to include new action
 4. Test with different model configurations

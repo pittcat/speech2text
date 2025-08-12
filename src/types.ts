@@ -13,6 +13,7 @@ export interface TranscriptionPreferences {
   polishPrompt?: string; // DeepSeek 润色专用 prompt
   enablePolishing?: boolean; // 是否启用润色功能
   polishingTask?: string; // 默认润色任务类型
+  selectedPromptId?: string; // 记住用户选择的润色模板
 
   language?: string;
   // 暂时保留以兼容现有代码，后续会逐步迁移到新系统
@@ -69,7 +70,7 @@ export interface DeepSeekConfig {
 }
 
 // 新增：文本处理任务类型
-export type TextProcessingTask = "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色";
+export type TextProcessingTask = "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色" | "vibe coding";
 
 // 新增：文本处理选项
 export interface TextProcessingOptions {
