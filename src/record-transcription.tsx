@@ -782,6 +782,18 @@ export default function RecordTranscription() {
               ...transcriptionResult,
               text: newText,
             });
+          } else {
+            // 允许在没有转写结果时也能输入/粘贴内容
+            setTranscriptionResult({
+              text: newText,
+              audioFilePath: "",
+              duration: 0,
+              timestamp: Date.now(),
+              metadata: {
+                provider: "manual",
+                language: currentPreferences.language || "auto",
+              },
+            });
           }
         }}
         placeholder={transcriptionResult ? "" : "转写结果将在这里显示..."}
@@ -803,6 +815,18 @@ export default function RecordTranscription() {
             setPolishingResult({
               ...polishingResult,
               polishedText: newText,
+            });
+          } else {
+            // 允许在没有润色结果时也能输入/粘贴内容
+            setPolishingResult({
+              originalText: "",
+              polishedText: newText,
+              task: selectedTask,
+              model: tempDeepSeekConfig.model || "deepseek-chat",
+              timestamp: Date.now(),
+              metadata: {
+                provider: "manual",
+              },
             });
           }
         }}
