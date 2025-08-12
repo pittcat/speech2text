@@ -450,12 +450,16 @@ export default function RecordTranscription() {
       const selectedPrompt = findPromptById(selectedPromptId);
       const customPrompt = selectedPrompt ? getPromptContent(selectedPrompt) : undefined;
 
-      const result = await client.processText(transcriptionResult.text, {
-        task: selectedTask,
-        customPrompt,
-        temperature: 0.7,
-        maxTokens: 2000,
-      });
+      const result = await client.processText(
+        transcriptionResult.text,
+        {
+          task: selectedTask,
+          customPrompt,
+          temperature: 0.7,
+          maxTokens: 2000,
+        },
+        currentPreferences.userTerms // 传递用户自定义术语
+      );
 
       info("RecordTranscription", "Text polishing completed", {
         task: selectedTask,

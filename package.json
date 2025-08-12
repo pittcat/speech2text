@@ -284,6 +284,10 @@
         {
           "title": "学术润色 - Academic style polishing",
           "value": "学术润色"
+        },
+        {
+          "title": "编程术语纠错 - Programming terms correction",
+          "value": "编程术语纠错"
         }
       ]
     },

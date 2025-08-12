@@ -56,6 +56,8 @@ export interface PolishingResult {
       completionTokens: number;
       totalTokens: number;
     };
+    hasProgrammingContent?: boolean;
+    appliedCorrections?: boolean;
   };
 }
 
@@ -69,7 +71,15 @@ export interface DeepSeekConfig {
 }
 
 // 新增：文本处理任务类型
-export type TextProcessingTask = "润色" | "改写" | "纠错" | "翻译" | "扩写" | "缩写" | "学术润色";
+export type TextProcessingTask =
+  | "润色"
+  | "改写"
+  | "纠错"
+  | "翻译"
+  | "扩写"
+  | "缩写"
+  | "学术润色"
+  | "编程术语纠错";
 
 // 新增：文本处理选项
 export interface TextProcessingOptions {
@@ -105,7 +115,10 @@ export type PresetPromptKey =
   | "casual"
   | "formal"
   | "concise"
-  | "detailed";
+  | "detailed"
+  | "programming"
+  | "code-review"
+  | "api-docs";
 
 // 新增：自定义润色提示词
 export interface CustomPrompt {

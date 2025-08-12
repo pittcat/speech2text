@@ -132,6 +132,30 @@ export const PRESET_POLISH_PROMPTS: PresetPrompt[] = [
     description: "增加细节，内容扩展",
     isCustom: false,
   },
+  {
+    key: "programming",
+    name: "编程术语纠错",
+    prompt:
+      "请纠正以下文本中的编程相关术语错误。重点修正常见的编程语言名称、技术框架、API名称、变量命名等。确保技术术语的准确性和规范性。只返回纠正后的文本，不要添加解释。",
+    description: "专门纠正编程和技术相关的术语错误",
+    isCustom: false,
+  },
+  {
+    key: "code-review",
+    name: "代码讨论润色",
+    prompt:
+      "请将以下关于代码讨论的文本进行润色，使其更适合技术交流。修正编程术语、技术概念表达，确保逻辑清晰、用词准确。只返回润色后的文本。",
+    description: "适用于代码评审、技术讨论的内容润色",
+    isCustom: false,
+  },
+  {
+    key: "api-docs",
+    name: "API文档规范",
+    prompt:
+      "请将以下内容整理为规范的API文档风格，修正技术术语，规范参数名称、数据类型、错误代码等表达。只返回整理后的文本。",
+    description: "将语音转录内容整理为标准API文档格式",
+    isCustom: false,
+  },
 ];
 
 // 新增：获取所有可用的润色提示词（预设 + 自定义）
