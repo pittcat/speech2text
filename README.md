@@ -7,6 +7,7 @@
 - 🎙️ **实时语音录制** - 使用 Sox 高质量录音
 - 🤖 **豆包语音识别** - 优秀的中文识别能力，支持实时流式识别
 - ✨ **DeepSeek 文本润色** - 智能优化转写结果，支持多种润色任务
+- 🔧 **编程术语纠错** - 专门针对程序员的技术术语智能纠错功能
 - 🌐 **多语言支持** - 自动检测或手动选择语言
 - 📝 **智能转写** - 支持自定义提示词和专业术语
 - 📋 **历史记录** - 保存和管理所有转写记录
@@ -107,6 +108,30 @@ npm run fix-lint
 - `⌘+Delete` - 删除记录
 - `⌘+S` - 查看统计
 - `⌘+Shift+E` - 导出历史
+
+## 🔧 编程术语纠错功能
+
+专为程序员设计的智能纠错功能，自动修正语音识别中的技术术语错误：
+
+### 支持的技术栈
+- **编程语言**: JavaScript, TypeScript, Python, Java, C++, Go, Rust 等
+- **框架库**: React, Vue.js, Angular, Django, Flask, Spring Boot 等  
+- **云平台**: AWS, Azure, Google Cloud, Kubernetes, Docker 等
+- **数据库**: MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch 等
+- **工具**: VS Code, Git, GitHub, Jenkins, Webpack 等
+
+### 使用方法
+1. 在 "Custom Terms" 中添加项目特定的技术术语
+2. 选择 "编程术语纠错" 润色模板
+3. 系统自动检测编程内容并应用智能纠错
+
+### 纠错示例
+```
+原文: "我们使用java script和my sql开发web应用"
+纠错后: "我们使用JavaScript和MySQL开发Web应用"
+```
+
+详细使用指南请查看 [PROGRAMMING-GUIDE.md](PROGRAMMING-GUIDE.md)
 
 ## 高级功能
 
