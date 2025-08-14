@@ -33,15 +33,18 @@ node test-doubao-client.js
 - **Main UI Components**: `src/record-transcription.tsx` (main recording interface), `src/transcription-history.tsx` (history management), `src/view-logs.tsx` (debugging interface)
 - **Audio Recording**: `src/hooks/useAudioRecorder.ts` handles Sox-based 16kHz WAV recording with real-time timing
 - **AI Integration**: `src/utils/ai/transcription.ts` orchestrates speech recognition, `src/utils/ai/doubao-client.ts` implements complex WebSocket binary protocol for Doubao, `src/utils/ai/deepseek-client.ts` handles text polishing
-- **Data Management**: `src/utils/history.ts` manages transcription records, `src/utils/logger.ts` provides structured logging
+- **Smart Processing**: `src/utils/programming-terms-corrector.ts` provides Vibe Coding functionality for programming terminology correction, `src/utils/prompt-manager.ts` manages scenario-based prompt templates
+- **Data Management**: `src/utils/history.ts` manages transcription records, `src/utils/logger.ts` provides structured logging, `src/utils/config.ts` handles API credentials and settings
 
 ### AI Services Architecture
 - **Doubao Engine**: WebSocket-based binary protocol with real-time streaming for speech recognition, requires complex frame handling and authentication
 - **DeepSeek Engine**: REST API for text processing and polishing, simpler HTTP-based integration
+- **Vibe Coding Engine**: Intelligent programming terms correction system with phonetic mapping and pattern recognition
 
 #### Supported Models
-- **Doubao**: Uses ByteDance's speech recognition service for voice-to-text conversion
+- **Doubao**: Uses ByteDance's speech recognition service for voice-to-text conversion (requires appKey, accessToken, secretKey)
 - **DeepSeek**: Supports deepseek-chat and deepseek-coder models for text polishing and processing
+- **Vibe Coding**: Built-in programming terminology correction engine with extensive language and framework support
 
 ## Key Technical Details
 
@@ -58,10 +61,12 @@ node test-doubao-client.js
 - Real-time result parsing from binary responses
 
 ### Configuration Management
-- Settings stored via Raycast preferences API
-- Supports language selection (auto-detect or manual)
+- Settings stored via Raycast preferences API and LocalStorage
+- Unified API configuration management with one-click save functionality
+- Supports language selection (auto-detect or manual) with 11 supported languages
 - Custom prompts and terminology for domain-specific transcription
-- Context awareness for improved accuracy
+- Context awareness for improved accuracy using highlighted text
+- Audio file management with configurable save/delete behavior
 
 ## Development Patterns
 
@@ -69,16 +74,27 @@ node test-doubao-client.js
 - All AI service calls wrapped in try-catch with detailed logging
 - User-friendly error messages displayed in Raycast UI
 - Fallback mechanisms when one AI service fails
+- Automatic retry logic for transient network errors
 
 ### State Management
-- React hooks for local component state
-- Raycast preferences for persistent settings
+- React hooks for local component state management
+- Raycast preferences API for persistent settings
+- LocalStorage for API configuration and custom settings
 - File-based storage for transcription history
+- Session-based state tracking with unique identifiers
 
 ### Logging and Debugging
 - Structured logging system with different levels (TRACE, DEBUG, INFO, WARN, ERROR)
-- In-app log viewer component for troubleshooting
-- Debug mode creates log file at `/tmp/speech-to-text-debug.log`
+- In-app log viewer component (`src/view-logs.tsx`) for real-time troubleshooting
+- Debug mode creates detailed log file at `/tmp/speech-to-text-debug.log`
+- Session correlation with unique IDs for tracking complete workflows
+- Automatic log rotation and cleanup mechanisms
+
+### Smart Processing
+- Programming content detection using keyword and pattern matching
+- Phonetic mapping for common speech recognition errors in technical terms
+- Customizable prompt templates for different scenarios
+- Intelligent text processing pipeline with multiple correction stages
 
 ## Testing Approach
 
@@ -102,9 +118,18 @@ node test-doubao-client.js
 - Uses WebSocket connection to wss://openspeech.bytedance.com
 
 ### DeepSeek API
-- Requires DEEPSEEK_API_KEY in Raycast preferences
+- Requires DEEPSEEK_API_KEY in Raycast preferences or plugin configuration
 - Uses REST API for text processing and polishing features
 - Supports multiple models: deepseek-chat, deepseek-coder
+- Configurable base URL for custom endpoints
+- Support for various text processing tasks: 润色、改写、纠错、翻译、扩写、缩写、学术润色
+
+### Vibe Coding Features
+- Automatic detection of programming-related content
+- Extensive phonetic mapping for programming language names
+- Framework and library name correction (React, Vue, Angular, etc.)
+- Tool and service name normalization (Docker, Kubernetes, AWS, etc.)
+- Custom dictionary support for domain-specific terms
 
 ## Common Development Tasks
 

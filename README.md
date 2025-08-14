@@ -1,19 +1,21 @@
 # Raycast Speech to Text Plugin
 
-一个功能强大的 Raycast 语音转文字插件，使用豆包（火山引擎）进行语音识别，集成 DeepSeek 提供文本润色功能。
+一个功能强大的 Raycast 语音转文字插件，使用豆包（火山引擎）进行语音识别，集成 DeepSeek 提供文本润色功能，并新增 Vibe Coding 智能编程术语纠错功能。
 
 ## 功能特点
 
-- 🎙️ **实时语音录制** - 使用 Sox 高质量录音
+- 🎙️ **实时语音录制** - 使用 Sox 高质量录音，16kHz 采样率
 - 🤖 **豆包语音识别** - 优秀的中文识别能力，支持实时流式识别
 - ✨ **DeepSeek 文本润色** - 智能优化转写结果，支持多种润色任务
-- 🌐 **多语言支持** - 自动检测或手动选择语言
+- 🔧 **Vibe Coding 术语纠错** - 智能识别和纠正编程术语的语音识别错误
+- 🌐 **多语言支持** - 自动检测或手动选择语言（支持中、英、日、韩等11种语言）
 - 📝 **智能转写** - 支持自定义提示词和专业术语
 - 📋 **历史记录** - 保存和管理所有转写记录
 - 🔄 **重新转写** - 使用不同设置重新处理音频
 - 📊 **统计分析** - 查看使用统计和趋势
 - 💾 **统一配置管理** - 一键保存所有API配置，避免重复输入
 - 🎨 **稳定UI体验** - 固定布局设计，消除页面抖动
+- 🎯 **智能提示词管理** - 内置多种场景提示词，支持自定义扩展
 
 ## 安装
 
@@ -70,15 +72,19 @@ npm run fix-lint
 ### 豆包 API 配置
 1. 访问[火山引擎控制台](https://console.volcengine.com)
 2. 创建语音识别应用，获取：
-   - App Key
-   - Access Token
-3. 在 Raycast 偏好设置中配置
+   - App Key（应用密钥）
+   - Access Token（访问令牌）
+   - Secret Key（密钥）
+3. 在插件界面或 Raycast 偏好设置中配置
 
 ### DeepSeek API 配置（可选 - 用于文本润色）
 1. 访问 [DeepSeek Console](https://platform.deepseek.com)
 2. 获取 API Key
-3. 在 Raycast 偏好设置中配置
+3. 在插件界面或 Raycast 偏好设置中配置
 4. 启用 "Enable Text Polishing" 功能
+5. 支持的模型：
+   - deepseek-chat（推荐，通用对话模型）
+   - deepseek-coder（代码专用模型）
 
 ## 使用方法
 
@@ -86,7 +92,27 @@ npm run fix-lint
 1. 打开 Raycast，搜索 "Record Transcription"
 2. 按 `⌘+R` 或点击 "Start Recording" 开始录音
 3. 按 `Enter` 停止录音
-4. 自动进行语音识别并复制到剪贴板
+4. 自动进行语音识别
+5. 可选择进行 DeepSeek 文本润色处理
+6. 结果自动复制到剪贴板并保存到历史记录
+
+### 文本润色功能
+录制完成后，可以选择不同的润色任务：
+- **润色** - 提升文本通顺度和可读性
+- **改写** - 使用不同表达方式重写内容
+- **纠错** - 修正语法和拼写错误
+- **翻译** - 翻译到其他语言
+- **扩写** - 添加更多细节和描述
+- **缩写** - 提取关键要点
+- **学术润色** - 学术写作风格优化
+- **Vibe Coding** - 智能编程术语纠错
+
+### Vibe Coding 功能
+专门针对编程内容的智能纠错：
+- 自动检测编程相关内容
+- 纠正常见的编程术语语音识别错误
+- 支持主流编程语言、框架、工具名称纠错
+- 处理中英文混合的技术文档
 
 ### 查看历史记录
 1. 打开 Raycast，搜索 "Transcription History"
@@ -99,6 +125,7 @@ npm run fix-lint
 - `⌘+R` - 开始/停止录音
 - `⌘+C` - 复制转写结果
 - `⌘+H` - 查看历史记录
+- `⌘+Shift+S` - 保存API配置
 
 **历史记录界面：**
 - `⌘+C` - 复制文本
@@ -108,32 +135,76 @@ npm run fix-lint
 - `⌘+S` - 查看统计
 - `⌘+Shift+E` - 导出历史
 
+**日志界面：**
+- `⌘+R` - 刷新日志
+- `⌘+C` - 复制选中日志
+- `⌘+Shift+C` - 清理日志
+
 ## 高级功能
 
+### 智能提示词管理
+插件内置多种场景化提示词模板：
+- **通用润色** - 提升整体文本质量
+- **技术文档** - 专业技术内容优化
+- **商务邮件** - 正式商务沟通
+- **学术写作** - 学术论文风格
+- **随意交流** - 日常对话风格
+- **正式文档** - 官方文档写作
+- **简洁表达** - 精简内容表述
+- **详细说明** - 扩展内容描述
+- **代码注释** - 代码相关说明
+- **技术翻译** - 技术术语翻译
+- **Vibe Coding** - 编程术语智能纠错
+
 ### 自定义提示词
-在 "Custom Prompt" 中输入指导 AI 的提示词，例如：
-- "保持准确的标点符号和段落结构"
-- "格式化数字、货币和单位"
-- "识别多个说话人"
+支持添加和管理自定义提示词：
+- 可以基于内置模板修改
+- 支持保存和复用
+- 动态加载到润色选项中
 
 ### 专业术语
 在 "Custom Terms" 中输入专业术语，用逗号分隔：
 ```
-React.js, TypeScript, GraphQL, Kubernetes
+React.js, TypeScript, GraphQL, Kubernetes, WebSocket, API
 ```
 
 ### 上下文识别
 启用 "Use highlighted text as context" 后，插件会自动使用你在其他应用中高亮的文本作为上下文，提高识别准确度。
 
+### 音频文件管理
+- **自动清理** - 默认转录后自动删除音频文件节省空间
+- **保留音频** - 可选择保留原始音频文件
+- **自定义路径** - 支持自定义音频文件保存位置
+
 ## 技术架构
 
-- **前端框架**: React + TypeScript
-- **音频录制**: Sox 命令行工具
-- **WebSocket**: 自定义二进制协议实现
-- **存储**: 本地文件系统
-- **API 集成**: 
-  - 豆包: WebSocket 流式语音识别 API
-  - DeepSeek: REST API 文本处理
+### 核心技术栈
+- **前端框架**: React + TypeScript + Raycast API
+- **音频录制**: Sox 命令行工具 (16kHz, 16-bit, mono WAV)
+- **WebSocket**: 自定义二进制协议实现（豆包 API）
+- **HTTP客户端**: REST API 调用（DeepSeek API）
+- **存储**: 本地文件系统 + LocalStorage
+
+### API 集成架构
+- **豆包语音识别**: WebSocket 流式语音识别 API
+  - 实时二进制音频流传输
+  - 复杂帧结构处理和认证机制
+  - 支持多语言识别和实时结果返回
+- **DeepSeek 文本处理**: REST API 文本处理
+  - HTTP POST 请求方式
+  - 支持多种文本处理任务
+  - 灵活的模型选择（chat/coder）
+
+### 智能处理模块
+- **编程术语纠错引擎**: `programming-terms-corrector.ts`
+  - 拼音/发音错误映射表
+  - 大小写规范化处理
+  - 常见模式错误修正
+  - 支持自定义词典扩展
+- **提示词管理系统**: `prompt-manager.ts`
+  - 内置场景化模板
+  - 自定义提示词支持
+  - 动态加载和验证机制
 
 ## 调试和故障排除
 
@@ -294,26 +365,35 @@ npm run dev:debug
 ```
 speech-to-text/
 ├── src/
-│   ├── record-transcription.tsx    # 主录音界面
-│   ├── transcription-history.tsx   # 历史记录界面
-│   ├── view-logs.tsx              # 日志查看界面
+│   ├── record-transcription.tsx         # 主录音界面
+│   ├── transcription-history.tsx        # 历史记录界面
+│   ├── view-logs.tsx                   # 日志查看界面
+│   ├── components/                     # UI组件目录
 │   ├── hooks/
-│   │   └── useAudioRecorder.ts    # 录音 Hook
+│   │   └── useAudioRecorder.ts         # 录音 Hook
 │   ├── utils/
 │   │   ├── ai/
-│   │   │   ├── transcription.ts   # 转写核心逻辑
-│   │   │   ├── doubao-client.ts   # 豆包语音识别客户端
-│   │   │   └── deepseek-client.ts # DeepSeek 文本润色客户端
-│   │   ├── audio.ts               # 音频处理
-│   │   ├── history.ts             # 历史记录管理
-│   │   ├── formatting.ts          # 格式化工具
-│   │   ├── config.ts              # 配置管理
-│   │   ├── logger.ts              # 日志系统
-│   │   └── prompt-manager.ts      # 提示词管理
-│   ├── types.ts                   # 类型定义
-│   └── constants.ts               # 常量定义
-├── package.json
-└── tsconfig.json
+│   │   │   ├── transcription.ts        # 转写核心逻辑
+│   │   │   ├── doubao-client.ts        # 豆包语音识别客户端
+│   │   │   └── deepseek-client.ts      # DeepSeek 文本润色客户端
+│   │   ├── audio/                      # 音频处理目录
+│   │   ├── audio.ts                    # 音频工具函数
+│   │   ├── history.ts                  # 历史记录管理
+│   │   ├── formatting.ts               # 格式化工具
+│   │   ├── config.ts                   # 配置管理
+│   │   ├── logger.ts                   # 日志系统
+│   │   ├── prompt-manager.ts           # 提示词管理
+│   │   ├── programming-dictionary.ts    # 编程词典
+│   │   └── programming-terms-corrector.ts # 编程术语纠错引擎
+│   ├── types.ts                        # 类型定义
+│   └── constants.ts                    # 常量定义
+├── test-doubao-client.js               # 豆包API测试脚本
+├── package.json                        # 项目配置和依赖
+├── tsconfig.json                       # TypeScript配置
+├── CLAUDE.md                          # Claude代码助手指南
+├── DEVELOPMENT.md                     # 开发指南
+├── DEBUG-GUIDE.md                     # 调试指南
+└── README.md                          # 项目说明文档
 ```
 
 ### 本地开发
