@@ -346,6 +346,9 @@ export default function RecordTranscription() {
         // 开始录音
         debug("RecordTranscription", "🐛 DEBUG: Recorder is NOT recording, will START recording");
         info("RecordTranscription", "Starting recording...");
+        // 每次开始新的录音时清空上一次的结果
+        setTranscriptionResult(null);
+        setPolishingResult(null);
         debug("RecordTranscription", "🐛 DEBUG: About to call startRecording()");
         await startRecording();
         debug(
@@ -523,7 +526,6 @@ export default function RecordTranscription() {
         task: inferredTask,
         customPrompt,
         temperature: 0.7,
-        maxTokens: 2000,
       });
 
       info("RecordTranscription", "Text polishing completed", {
