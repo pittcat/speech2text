@@ -10,6 +10,7 @@ import {
   useNavigation,
   LocalStorage,
 } from "@raycast/api";
+import { useCachedState } from "@raycast/utils";
 import { useAudioRecorder } from "./hooks/useAudioRecorder";
 import { transcribeAudio, getPreferences } from "./utils/ai/transcription";
 import { addToHistory } from "./utils/history";
@@ -44,6 +45,7 @@ import {
   getPromptContent,
 } from "./utils/prompt-manager";
 import { detectProgrammingContent } from "./utils/programming-terms-corrector";
+import { playTranscriptionCompleteSound, playPolishCompleteSound } from "./utils/sound-notification";
 
 /**
  * 从润色模板推断对应的任务类型
@@ -76,10 +78,27 @@ export default function RecordTranscription() {
 
   const [currentPreferences, setCurrentPreferences] =
     useState<TranscriptionPreferences>(preferences);
-  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
-  // 新增：润色结果状态
-  const [polishingResult, setPolishingResult] = useState<PolishingResult | null>(null);
+
+  // 使用 useCachedState 持久化转写结果，防止切换应用时丢失
+  const [transcriptionResult, setTranscriptionResult] = useCachedState<TranscriptionResult | null>(
+    "current-transcription-result",
+    null
+  );
+
+  // 新增：润色结果状态（也使用持久化）
+  const [polishingResult, setPolishingResult] = useCachedState<PolishingResult | null>(
+    "current-polishing-result",
+    null
+  );
+
   const [highlightedText, setHighlightedText] = useState<string>("");
+
+  // 新增：增量转写结果和进度状态（临时状态，不需要持久化）
+  const [partialResults, setPartialResults] = useState<string[]>([]);
+  const [transcriptionStatus, setTranscriptionStatus] = useState<string>("");
+
+  // 新增：session ID 用于全链路跟踪
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
 
   // 配置编辑状态 - 使用更安全的初始化
   const [showDoubaoConfig, setShowDoubaoConfig] = useState(true); // 默认显示配置表单
@@ -233,21 +252,21 @@ export default function RecordTranscription() {
       });
 
       if (recorderState.isRecording) {
-        debug("RecordTranscription", "🐛 DEBUG: Recorder is recording, will STOP recording");
-        info("RecordTranscription", "Stopping recording...");
+        debug("RecordTranscription", `🐛 DEBUG: [${currentSessionId}] Recorder is recording, will STOP recording`);
+        info("RecordTranscription", `[${currentSessionId}] Stopping recording...`);
 
         // 添加一个小延迟来确保这是用户的有意操作
         await new Promise((resolve) => setTimeout(resolve, 100));
         // 停止录音并开始转写
-        debug("RecordTranscription", "🐛 DEBUG: About to call stopRecording()");
+        debug("RecordTranscription", `🐛 DEBUG: [${currentSessionId}] About to call stopRecording()`);
         const audioFilePath = await stopRecording();
-        debug("RecordTranscription", "🐛 DEBUG: stopRecording() returned", { audioFilePath });
+        debug("RecordTranscription", `🐛 DEBUG: [${currentSessionId}] stopRecording() returned`, { audioFilePath });
 
         if (!audioFilePath) {
           throw new Error("No audio file recorded");
         }
 
-        info("RecordTranscription", "Audio file saved", { audioFilePath });
+        info("RecordTranscription", `[${currentSessionId}] Audio file saved`, { audioFilePath });
 
         // 验证音频格式
         const audioInfo = await import("./utils/audio").then((m) => m.getWavInfo(audioFilePath));
@@ -278,8 +297,10 @@ export default function RecordTranscription() {
         }
 
         setIsTranscribing(true);
+        setPartialResults([]); // 清空之前的增量结果
+        setTranscriptionStatus("准备转写...");
 
-        // 执行转写
+        // 执行转写，传递回调函数
         const prompt = buildPromptWithContext();
         debug("RecordTranscription", "Starting transcription", {
           provider: "doubao",
@@ -287,17 +308,36 @@ export default function RecordTranscription() {
           promptLength: prompt.length,
         });
 
-        const result = await transcribeAudio(audioFilePath, {
-          ...currentPreferences,
-          promptText: prompt,
-        });
+        const result = await transcribeAudio(
+          audioFilePath,
+          {
+            ...currentPreferences,
+            promptText: prompt,
+          },
+          // 增量结果回调
+          (text: string) => {
+            debug("RecordTranscription", "Received partial result", { text });
+            setPartialResults((prev) => [...prev, text]);
+          },
+          // 进度状态回调
+          (status: string) => {
+            debug("RecordTranscription", "Status update", { status });
+            setTranscriptionStatus(status);
+          }
+        );
 
-        info("RecordTranscription", "Transcription completed", {
+        info("RecordTranscription", `[${currentSessionId}] Transcription completed`, {
           textLength: result.text.length,
           provider: result.metadata?.provider,
+          sessionId: currentSessionId,
+          partialResultsCount: partialResults.length,
         });
 
         setTranscriptionResult(result);
+        debug("RecordTranscription", `[${currentSessionId}] Transcription result saved to state`);
+
+        // 播放转写完成提示音
+        playTranscriptionCompleteSound();
 
         // 检测是否为编程内容，自动选择合适的润色模板
         if (result.text && detectProgrammingContent(result.text)) {
@@ -343,17 +383,24 @@ export default function RecordTranscription() {
           await deleteAudioFile(audioFilePath);
         }
       } else {
-        // 开始录音
-        debug("RecordTranscription", "🐛 DEBUG: Recorder is NOT recording, will START recording");
-        info("RecordTranscription", "Starting recording...");
+        // 开始录音 - 生成新的 session ID
+        const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        setCurrentSessionId(newSessionId);
+
+        debug("RecordTranscription", `🐛 DEBUG: [${newSessionId}] Recorder is NOT recording, will START recording`);
+        info("RecordTranscription", `[${newSessionId}] Starting recording...`);
+
         // 每次开始新的录音时清空上一次的结果
         setTranscriptionResult(null);
         setPolishingResult(null);
-        debug("RecordTranscription", "🐛 DEBUG: About to call startRecording()");
+        setPartialResults([]);
+        setTranscriptionStatus("");
+
+        debug("RecordTranscription", `🐛 DEBUG: [${newSessionId}] About to call startRecording()`);
         await startRecording();
         debug(
           "RecordTranscription",
-          "🐛 DEBUG: startRecording() completed, new state should be recording=true"
+          `🐛 DEBUG: [${newSessionId}] startRecording() completed, new state should be recording=true`
         );
       }
     } catch (err) {
@@ -540,6 +587,9 @@ export default function RecordTranscription() {
 
       // 复制润色后的文本到剪贴板
       await Clipboard.copy(result.polishedText);
+
+      // 播放润色完成提示音
+      playPolishCompleteSound();
 
       await showToast({
         style: Toast.Style.Success,
@@ -837,15 +887,33 @@ export default function RecordTranscription() {
     >
       {/* 状态指示区域 - 固定高度避免抖动 */}
       <Form.Description
-        title={recorderState.isRecording ? "Recording" : isPolishing ? "Polishing" : "Status"}
+        title={
+          recorderState.isRecording
+            ? "Recording"
+            : isTranscribing
+              ? "Transcribing"
+              : isPolishing
+                ? "Polishing"
+                : "Status"
+        }
         text={
           recorderState.isRecording
             ? `🔴 ${formatDuration(recorderState.duration)} - Press Cmd+R to stop recording`
-            : isPolishing
-              ? "Processing with DeepSeek... Please wait"
-              : "Ready to record - Press Cmd+R to start"
+            : isTranscribing
+              ? `🎙️ ${transcriptionStatus || "转写中..."} ${partialResults.length > 0 ? `(已识别 ${partialResults.length} 段)` : ""}`
+              : isPolishing
+                ? "Processing with DeepSeek... Please wait"
+                : "Ready to record - Press Cmd+R to start"
         }
       />
+
+      {/* 增量结果预览 - 仅在转写中且有结果时显示 */}
+      {isTranscribing && partialResults.length > 0 && (
+        <Form.Description
+          title="实时转写预览"
+          text={partialResults[partialResults.length - 1] || "识别中..."}
+        />
+      )}
 
       {/* 转写结果 - 始终渲染但控制可见性 */}
       <Form.TextArea

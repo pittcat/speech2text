@@ -82,7 +82,9 @@ export function getPreferences(): TranscriptionPreferences {
 // 主转写函数
 export async function transcribeAudio(
   audioFilePath: string,
-  overrides?: Partial<TranscriptionPreferences>
+  overrides?: Partial<TranscriptionPreferences>,
+  onPartialResult?: (text: string) => void,
+  onProgress?: (status: string) => void
 ): Promise<TranscriptionResult> {
   const timer = startTimer("Transcription", "transcribeAudio");
   const preferences = getPreferences();
@@ -107,8 +109,13 @@ export async function transcribeAudio(
   const startTime = Date.now();
 
   try {
-    // 使用豆包进行转写
-    const result = await transcribeWithDoubao(audioFilePath, preferences);
+    // 使用豆包进行转写，传递回调
+    const result = await transcribeWithDoubao(
+      audioFilePath,
+      preferences,
+      onPartialResult,
+      onProgress
+    );
 
     // 添加音频元数据
     if (audioInfo) {
@@ -142,7 +149,9 @@ export async function transcribeAudio(
 // 使用豆包进行转写
 async function transcribeWithDoubao(
   audioFilePath: string,
-  preferences: TranscriptionPreferences
+  preferences: TranscriptionPreferences,
+  onPartialResult?: (text: string) => void,
+  onProgress?: (status: string) => void
 ): Promise<TranscriptionResult> {
   const timer = startTimer("Transcription", "transcribeWithDoubao");
 
@@ -156,6 +165,7 @@ async function transcribeWithDoubao(
 
   try {
     // 显示连接提示
+    onProgress?.("正在连接到豆包服务器...");
     await showToast({
       style: Toast.Style.Animated,
       title: "Connecting to Doubao...",
@@ -169,6 +179,7 @@ async function transcribeWithDoubao(
 
     // 发送配置
     debug("Transcription", "Sending config to Doubao");
+    onProgress?.("正在发送配置...");
     await client.sendConfig({
       language: preferences.language,
       enableITN: true,
@@ -180,6 +191,7 @@ async function transcribeWithDoubao(
     debug("Transcription", "Config sent, proceeding without waiting for response");
 
     // 更新提示
+    onProgress?.("正在转写音频...");
     await showToast({
       style: Toast.Style.Animated,
       title: "Transcribing with Doubao...",
@@ -201,9 +213,10 @@ async function transcribeWithDoubao(
       pcmSize: pcmData.length,
     });
 
-    // 监听实时转写结果
+    // 监听实时转写结果 - 传递给回调
     client.on("transcription", (text: string) => {
       trace("Transcription", "Partial result", { text, length: text.length });
+      onPartialResult?.(text);
     });
 
     // 监听错误事件
