@@ -45,7 +45,6 @@ import {
   getPromptContent,
 } from "./utils/prompt-manager";
 import { detectProgrammingContent } from "./utils/programming-terms-corrector";
-import { playTranscriptionCompleteSound, playPolishCompleteSound } from "./utils/sound-notification";
 
 /**
  * 从润色模板推断对应的任务类型
@@ -336,9 +335,6 @@ export default function RecordTranscription() {
         setTranscriptionResult(result);
         debug("RecordTranscription", `[${currentSessionId}] Transcription result saved to state`);
 
-        // 播放转写完成提示音
-        playTranscriptionCompleteSound();
-
         // 检测是否为编程内容，自动选择合适的润色模板
         if (result.text && detectProgrammingContent(result.text)) {
           debug(
@@ -587,9 +583,6 @@ export default function RecordTranscription() {
 
       // 复制润色后的文本到剪贴板
       await Clipboard.copy(result.polishedText);
-
-      // 播放润色完成提示音
-      playPolishCompleteSound();
 
       await showToast({
         style: Toast.Style.Success,
