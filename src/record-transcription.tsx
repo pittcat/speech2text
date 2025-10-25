@@ -9,6 +9,8 @@ import {
   Clipboard,
   useNavigation,
   LocalStorage,
+  launchCommand,
+  LaunchType,
 } from "@raycast/api";
 import { useCachedState } from "@raycast/utils";
 import { useAudioRecorder } from "./hooks/useAudioRecorder";
@@ -45,6 +47,8 @@ import {
   getPromptContent,
 } from "./utils/prompt-manager";
 import { detectProgrammingContent } from "./utils/programming-terms-corrector";
+import { ensureBackgroundPaths, writeStatus as writeBgStatus } from "./utils/background-task";
+import { hashText } from "./utils/hash";
 
 /**
  * 从润色模板推断对应的任务类型
@@ -74,6 +78,7 @@ export default function RecordTranscription() {
   const [isProcessing, setIsProcessing] = useState(false);
   // 新增：润色处理状态
   const [isPolishing, setIsPolishing] = useState(false);
+  const [polishingError, setPolishingError] = useState<string | null>(null);
 
   const [currentPreferences, setCurrentPreferences] =
     useState<TranscriptionPreferences>(preferences);
@@ -84,6 +89,7 @@ export default function RecordTranscription() {
     null
   );
 
+  
   // 新增：润色结果状态（也使用持久化）
   const [polishingResult, setPolishingResult] = useCachedState<PolishingResult | null>(
     "current-polishing-result",
@@ -186,15 +192,8 @@ export default function RecordTranscription() {
         logFile: logger.getLogFilePath(),
       });
 
-      // 添加调试日志
-      console.log("🐛 DEBUG: All preferences:", currentPreferences);
-      console.log("🐛 DEBUG: Is Doubao configured:", isDoubaoConfigured_);
-      console.log("🐛 DEBUG: Is DeepSeek configured:", isDeepSeekConfigured_);
-      console.log("🐛 DEBUG: Show Doubao config form:", shouldShowDoubaoConfig);
-      console.log("🐛 DEBUG: Show DeepSeek config form:", shouldShowDeepSeekConfig);
     } catch (error) {
       error("RecordTranscription", "Component initialization failed", error);
-      console.error("🐛 DEBUG: Component initialization error:", error);
       // 确保组件仍能正常工作
       setShowDoubaoConfig(true);
       setShowDeepSeekConfig(true);
@@ -296,6 +295,10 @@ export default function RecordTranscription() {
         }
 
         setIsTranscribing(true);
+        try {
+          ensureBackgroundPaths();
+          writeBgStatus({ status: "transcribing", audioFilePath });
+        } catch {}
         setPartialResults([]); // 清空之前的增量结果
         setTranscriptionStatus("准备转写...");
 
@@ -334,6 +337,9 @@ export default function RecordTranscription() {
 
         setTranscriptionResult(result);
         debug("RecordTranscription", `[${currentSessionId}] Transcription result saved to state`);
+        try {
+          writeBgStatus({ status: "completed", audioFilePath, text: result.text });
+        } catch {}
 
         // 检测是否为编程内容，自动选择合适的润色模板
         if (result.text && detectProgrammingContent(result.text)) {
@@ -341,6 +347,7 @@ export default function RecordTranscription() {
             "RecordTranscription",
             "Detected programming content, auto-selecting vibe coding template"
           );
+
           // 自动选择Vibe Coding模板（同时包含纠错和润色）
           setSelectedPromptId("vibe-coding");
           // 保存自动选择的模板
@@ -373,6 +380,7 @@ export default function RecordTranscription() {
             },
           },
         });
+        // 不再自动打开历史界面，保持在当前录音/编辑界面
 
         // 如果不保存音频文件，删除它
         if (!currentPreferences.saveAudioFiles && audioFilePath) {
@@ -401,6 +409,7 @@ export default function RecordTranscription() {
       }
     } catch (err) {
       error("RecordTranscription", "Record and transcribe error", err);
+      try { writeBgStatus({ status: "error", error: err instanceof Error ? err.message : String(err) }); } catch {}
       await showToast({
         style: Toast.Style.Failure,
         title: "Operation failed",
@@ -520,8 +529,10 @@ export default function RecordTranscription() {
   };
 
   // 新增：处理文本润色
-  const handlePolishText = async () => {
-    if (!transcriptionResult?.text) {
+  const handlePolishText = async (overrideText?: string, overridePromptId?: string) => {
+    const textToPolish = overrideText ?? transcriptionResult?.text;
+
+    if (!textToPolish) {
       await showToast({
         style: Toast.Style.Failure,
         title: "No text to polish",
@@ -536,22 +547,18 @@ export default function RecordTranscription() {
     }
 
     setIsPolishing(true);
-    const timer = logger.startTimer("RecordTranscription", "handlePolishText");
-
-    // 显示开始润色的toast
-    await showToast({
-      style: Toast.Style.Animated,
-      title: "Polishing with DeepSeek...",
-    });
+    setPolishingError(null);
 
     try {
-      // 从选中的模板推断任务类型
-      const inferredTask = getTaskFromPromptId(selectedPromptId);
-      
+      // 从选中的模板推断任务类型（支持覆盖）
+      const effectivePromptId = overridePromptId || selectedPromptId;
+      const inferredTask = getTaskFromPromptId(effectivePromptId);
+
       debug("RecordTranscription", "Starting text polishing", {
-        promptId: selectedPromptId,
+        promptId: effectivePromptId,
         inferredTask,
-        textLength: transcriptionResult.text.length,
+        textLength: textToPolish.length,
+        hash: hashText(textToPolish),
       });
 
       const deepseekConfig = getDeepSeekConfig();
@@ -562,10 +569,10 @@ export default function RecordTranscription() {
       const client = createDeepSeekClient(deepseekConfig);
 
       // 获取选中的提示词内容
-      const selectedPrompt = findPromptById(selectedPromptId);
+      const selectedPrompt = findPromptById(effectivePromptId);
       const customPrompt = selectedPrompt ? getPromptContent(selectedPrompt) : undefined;
 
-      const result = await client.processText(transcriptionResult.text, {
+      const result = await client.processText(textToPolish, {
         task: inferredTask,
         customPrompt,
         temperature: 0.7,
@@ -580,27 +587,72 @@ export default function RecordTranscription() {
       });
 
       setPolishingResult(result);
-
-      // 复制润色后的文本到剪贴板
-      await Clipboard.copy(result.polishedText);
-
-      await showToast({
-        style: Toast.Style.Success,
-        title: "Polishing completed",
-      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      error("RecordTranscription", "Text polishing failed", { error: errorMessage });
+      setPolishingError(errorMessage);
+
       await showToast({
         style: Toast.Style.Failure,
-        title: "Polishing failed",
+        title: "文本润色失败",
         message: errorMessage,
       });
     } finally {
       setIsPolishing(false);
-      timer();
     }
   };
+
+  // 接收来自历史记录的"传入文本"和"自动润色"指令（支持命令已打开时多次触发）
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    let lastNonce = "";
+    const poll = async () => {
+      try {
+        const incoming = await LocalStorage.getItem("incomingText");
+        const auto = await LocalStorage.getItem("incomingAutoPolish");
+        const nonce = await LocalStorage.getItem("incomingNonce");
+
+        if (
+          nonce && typeof nonce === "string" && nonce.length > 0 &&
+          nonce !== lastNonce &&
+          incoming && typeof incoming === "string" && incoming.length > 0
+        ) {
+          // 验证 incoming 文本是否合理（不是哈希值或token）
+          const isValidText = incoming.length > 5 && !/^[a-zA-Z0-9]+$/.test(incoming);
+
+          if (isValidText) {
+            lastNonce = nonce;
+
+            // 新文本到来时清空旧的润色结果，避免显示错位
+            setPolishingResult(null);
+            setTranscriptionResult({
+              text: incoming,
+              timestamp: Date.now(),
+              metadata: { provider: "import" },
+            });
+
+            await LocalStorage.removeItem("incomingText");
+            await LocalStorage.removeItem("incomingAutoPolish");
+            await LocalStorage.removeItem("incomingNonce");
+            if (auto === "true") {
+              // 从历史进入的自动润色默认使用"通用润色"模板，避免 vibe-coding 过度标准化导致观感一致
+              handlePolishText(incoming, "general");
+            }
+          } else {
+            // 清理无效数据
+            await LocalStorage.removeItem("incomingText");
+            await LocalStorage.removeItem("incomingAutoPolish");
+            await LocalStorage.removeItem("incomingNonce");
+          }
+        }
+      } catch {}
+    };
+    // 立即检查一次，并每 500ms 轮询
+    poll();
+    timer = setInterval(poll, 500);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, []);
 
   // 统一的配置保存函数
   const saveAllConfigurations = async () => {
@@ -842,7 +894,9 @@ export default function RecordTranscription() {
                     : `Polish with ${availablePrompts.find(p => (p.isCustom ? p.id : p.key) === selectedPromptId)?.name || "DeepSeek"}`
                 }
                 icon={isPolishing ? Icon.CircleProgress : Icon.Wand}
-                onAction={handlePolishText}
+                onAction={() => {
+          handlePolishText();
+        }}
                 shortcut={{ modifiers: ["cmd"], key: "p" }}
               />
             </>
@@ -872,7 +926,7 @@ export default function RecordTranscription() {
             title="View History"
             icon={Icon.Clock}
             onAction={() => push(<TranscriptionHistory />)}
-            shortcut={{ modifiers: ["cmd"], key: "h" }}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "h" }}
           />
         </ActionPanel>
       }
@@ -1057,7 +1111,7 @@ export default function RecordTranscription() {
           <Form.Separator />
           <Form.Description
             title="🔥 保存API配置"
-            text={`方式1: 快捷键 Cmd+Shift+S\n方式2: 点击右上角 "Actions" 按钮（⌘K）`}
+            text={`方式1: 快捷键 Cmd+Shift+S\n方式2: 点击右上角 Actions 按钮（快捷键可在 Raycast 中查看）`}
           />
           <Form.Description
             title=""

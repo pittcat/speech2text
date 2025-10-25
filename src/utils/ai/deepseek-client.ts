@@ -97,6 +97,7 @@ export class DeepSeekClient {
       // 构建用户消息
       const userMessage = `请对以下文本进行${options.task}：\n\n${preprocessedText}`;
 
+  
       // 计算输出 token 预算（限制扩写）
       const maxTokensBudget = this.computeMaxTokens(preprocessedText, options.task, options.maxTokens);
 
@@ -142,6 +143,7 @@ export class DeepSeekClient {
       }
 
       let polishedText = result.choices[0].message.content.trim();
+
       // Vibe Coding：对输出再做一次安全清理，移除异常字符（如 ▌ 等）
       if (options.task === "vibe coding") {
         const cleaned = sanitizeForVibeCoding(polishedText);
@@ -152,11 +154,65 @@ export class DeepSeekClient {
           });
           polishedText = cleaned;
         }
+
+        // 特殊处理：检查vibe coding是否违反了长度限制
+        const ratio = polishedText.length / preprocessedText.length;
+        if (ratio > 1.3) {
+          warn("DeepSeekClient", "Vibe coding output too long, retrying with stricter constraint", {
+            originalLength: preprocessedText.length,
+            polishedLength: polishedText.length,
+            ratio
+          });
+
+          const strictPrompt = `${systemPrompt}\n\n严格警告：\n- 绝对禁止扩写或新增任何信息\n- 输出长度必须与原文接近（±10%）\n- 只能修正拼写错误和术语，不能添加任何新内容\n- 返回完全相同的文本，仅修正错误词汇\n`;
+          const strictRequestBody = {
+            ...requestBody,
+            messages: [
+              { role: "system", content: strictPrompt },
+              { role: "user", content: userMessage },
+            ],
+            max_tokens: Math.max(48, Math.ceil((preprocessedText.length / 3) * 1.1) + 16),
+            temperature: 0.1,
+          };
+
+          const strictResp = await fetch(`${this.baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.apiKey}`,
+            },
+            body: JSON.stringify(strictRequestBody),
+          });
+
+          if (strictResp.ok) {
+            const strictJson = await strictResp.json();
+            if (strictJson?.choices?.[0]?.message?.content) {
+              const strictText = strictJson.choices[0].message.content.trim();
+              const strictRatio = strictText.length / preprocessedText.length;
+              if (strictRatio <= 1.2) {
+                info("DeepSeekClient", "Applied strict vibe coding retry", {
+                  originalRatio: ratio,
+                  strictRatio,
+                  originalLength: preprocessedText.length,
+                  finalLength: strictText.length
+                });
+                polishedText = strictText;
+
+                // 再次清理
+                const finalCleaned = sanitizeForVibeCoding(polishedText);
+                if (finalCleaned !== polishedText) {
+                  polishedText = finalCleaned;
+                }
+              }
+            }
+          }
+        }
       }
+
       const processingTime = Date.now() - startTime;
 
       // 非扩写任务：若结果长度显著超出原文，则重试一次更严格的指令
-      if (this.isNonExpansionTask(options.task)) {
+      if (this.isNonExpansionTask(options.task) && options.task !== "vibe coding") {
         const ratio = polishedText.length / preprocessedText.length;
         if (ratio > 1.3) {
           debug("DeepSeekClient", "Output too long, retrying with stricter constraint", {
@@ -227,7 +283,6 @@ export class DeepSeekClient {
       return polishingResult;
     } catch (err) {
       const processingTime = Date.now() - startTime;
-
       error("DeepSeekClient", "Text processing failed", {
         task: options.task,
         textLength: text.length,

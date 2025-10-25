@@ -29,6 +29,13 @@
       "description": "View debug logs for troubleshooting",
       "mode": "view",
       "keywords": ["logs", "debug", "troubleshoot"]
+    },
+    {
+      "name": "menu-bar-status",
+      "title": "Recorder Status",
+      "subtitle": "Speech to Text",
+      "description": "Show recording/transcribing status with quick actions",
+      "mode": "menu-bar"
     }
   ],
   "preferences": [

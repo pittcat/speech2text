@@ -58,6 +58,8 @@ declare namespace Preferences {
   export type TranscriptionHistory = ExtensionPreferences & {}
   /** Preferences accessible in the `view-logs` command */
   export type ViewLogs = ExtensionPreferences & {}
+  /** Preferences accessible in the `menu-bar-status` command */
+  export type MenuBarStatus = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -67,5 +69,7 @@ declare namespace Arguments {
   export type TranscriptionHistory = {}
   /** Arguments passed to the `view-logs` command */
   export type ViewLogs = {}
+  /** Arguments passed to the `menu-bar-status` command */
+  export type MenuBarStatus = {}
 }
 

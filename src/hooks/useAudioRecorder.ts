@@ -6,6 +6,7 @@ import { existsSync, mkdirSync } from "fs";
 import { STORAGE_PATH, SOX_COMMAND } from "../constants";
 import { AudioRecorderState } from "../types";
 import { debug, error } from "../utils/logger";
+import { ensureBackgroundPaths, writeStatus as writeBgStatus } from "../utils/background-task";
 import { getPreferences } from "../utils/ai/transcription";
 
 export function useAudioRecorder() {
@@ -91,6 +92,15 @@ export function useAudioRecorder() {
       // 检查进程是否真的启动了
       if (recordingProcess.current && recordingProcess.current.pid) {
         debug("AudioRecorder", "Sox process started", { pid: recordingProcess.current.pid });
+        try {
+          ensureBackgroundPaths();
+          writeBgStatus({
+            status: "recording",
+            pid: recordingProcess.current.pid,
+            audioFilePath,
+            timestamps: { startedAt: new Date().toISOString() },
+          });
+        } catch {}
       } else {
         error("AudioRecorder", "Failed to start Sox process");
         throw new Error("Failed to start Sox process");
@@ -153,6 +163,15 @@ export function useAudioRecorder() {
         isRecording: false,
         isPaused: false,
       }));
+
+      try {
+        ensureBackgroundPaths();
+        writeBgStatus({
+          status: "stopped",
+          audioFilePath: state.audioFilePath,
+          timestamps: { startedAt: undefined, stoppedAt: new Date().toISOString() },
+        });
+      } catch {}
 
       await showToast({
         style: Toast.Style.Success,

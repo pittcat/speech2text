@@ -11,6 +11,9 @@ import {
   Alert,
   Detail,
   useNavigation,
+  LocalStorage,
+  launchCommand,
+  LaunchType,
 } from "@raycast/api";
 import {
   loadHistory,
@@ -22,6 +25,8 @@ import {
   getHistoryStats,
 } from "./utils/history";
 import { retranscribeAudio } from "./utils/ai/transcription";
+import { debug } from "./utils/logger";
+import { hashText } from "./utils/hash";
 import {
   formatTimestamp,
   formatRelativeTime,
@@ -208,6 +213,33 @@ export default function TranscriptionHistory() {
               }
               actions={
                 <ActionPanel>
+                  {/* 默认：进入录音界面并自动润色（Enter） */}
+                  <Action
+                    title="Open in Editor and Polish"
+                    icon={Icon.Wand}
+                    onAction={async () => {
+                      debug("History", "Open in Editor and Polish", { id: item.id, textLen: item.text.length, hash: hashText(item.text) });
+                      await LocalStorage.setItem("incomingText", item.text);
+                      await LocalStorage.setItem("incomingAutoPolish", "true");
+                      await LocalStorage.setItem("incomingNonce", String(Date.now()));
+                      await launchCommand({ name: "record-transcription", type: LaunchType.UserInitiated });
+                    }}
+                  />
+
+                  {/* 仅进入录音界面，不自动润色 */}
+                  <Action
+                    title="Open in Editor"
+                    icon={Icon.Microphone}
+                    shortcut={{ modifiers: ["cmd"], key: "o" }}
+                    onAction={async () => {
+                      debug("History", "Open in Editor", { id: item.id, textLen: item.text.length, hash: hashText(item.text) });
+                      await LocalStorage.setItem("incomingText", item.text);
+                      await LocalStorage.setItem("incomingAutoPolish", "false");
+                      await LocalStorage.setItem("incomingNonce", String(Date.now()));
+                      await launchCommand({ name: "record-transcription", type: LaunchType.UserInitiated });
+                    }}
+                  />
+
                   <ActionPanel.Section>
                     <Action
                       title="Copy Text"
@@ -219,7 +251,6 @@ export default function TranscriptionHistory() {
                       title="View Details"
                       icon={Icon.Eye}
                       target={<TranscriptionDetail item={item} />}
-                      shortcut={{ modifiers: ["cmd"], key: "o" }}
                     />
                   </ActionPanel.Section>
 
